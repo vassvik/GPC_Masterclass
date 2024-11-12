@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"name": "GPC Masterclass Root",
+			"path": ".",
+			"folder_exclude_patterns": [
+			],
+			"file_exclude_patterns": [
+			],
+
+			"binary_file_patterns": [
+			]
+		},
+	],
+	"build_systems": [
+    	{
+	    	"shell_cmd": "Odin\\odin run . -show-timings -o:speed -no-bounds-check",
+		    "file_regex": "(.*)[(]([0-9]+)[:]([0-9]+)*[)](.*)",
+		    "selector": "source.odin",
+		    "name": "GPC Masterclass",
+			"working_dir": "${project_path:${folder}}",
+            "shell": true,
+
+		    "variants": [
+		    ]
+		}
+    ]
+}

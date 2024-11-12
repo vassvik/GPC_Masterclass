@@ -115,6 +115,8 @@ ctx: struct {
     should_step: bool,
 
     header: Binary_Header,
+
+    use_optimizations: bool,
 } = {
     pre_smooths0 = 2,
     pre_smooths1 = 3,
@@ -199,32 +201,32 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.timestep); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Simulation                      %.3f ms = %.3f GB/s = %.3f Bvox/s", time_simulation, bw_simulation, sim_speed); pos += dpos
     when !STRIP_MOST_QUERIES {
-        draw_string(&ctx.font, 16, {10, pos},  font_color, " Advection                      %.3f ms = %.3f GB/s",                        process_finished_query("advection", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, " Reduce data                    %.3f ms = %.3f GB/s",                        process_finished_query("reduce data", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, " Compute mask                   %.3f ms = %.3f GB/s",                        process_finished_query("compute mask", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, " Projection                     %.3f ms = %.3f GB/s",                        process_finished_query("projection", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Divergence                    %.3f ms = %.3f GB/s",                        process_finished_query("divergence", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Poisson                       %.3f ms = %.3f GB/s",                        process_finished_query("poisson", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "   Zero          level 0        %.3f ms = %.3f GB/s",                        process_finished_query("zero 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "   V-Cycle       level 0        %.3f ms = %.3f GB/s",                        process_finished_query("vcycle X1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Jacobi       level 0   % 4dx%.3f ms = %.3f GB/s", ctx.pre_smooths0,      process_finished_query("jacobi 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Residual     level 0        %.3f ms = %.3f GB/s",                        process_finished_query("residual 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Restrict     level 0->1     %.3f ms = %.3f GB/s",                        process_finished_query("restrict 1-2", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Zero         level 1        %.3f ms = %.3f GB/s",                        process_finished_query("zero 2", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    V-Cycle      level 1        %.3f ms = %.3f GB/s",                        process_finished_query("vcycle X2", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Jacobi      level 1   % 4dx%.3f ms = %.3f GB/s", ctx.pre_smooths1,      process_finished_query("jacobi 2", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Residual    level 1        %.3f ms = %.3f GB/s",                        process_finished_query("residual 2", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Restrict    level 1->2     %.3f ms = %.3f GB/s",                        process_finished_query("restrict 2-4", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Zero        level 2        %.3f ms = %.3f GB/s",                        process_finished_query("zero 4", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     V-Cycle     level 2        %.3f ms = %.3f GB/s",                        process_finished_query("vcycle X4", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "      Sor        level 2   % 4dx%.3f ms = %.3f GB/s", 2*ctx.solves2,         process_finished_query("sor 4", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Prolongate  level 2->1     %.3f ms = %.3f GB/s",                        process_finished_query("prolongate 4-2", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Jacobi      level 1   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths1,     process_finished_query("jacobi 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Prolongate   level 1->0     %.3f ms = %.3f GB/s",                        process_finished_query("prolongate 2-1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Jacobi       level 0   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths0,     process_finished_query("jacobi 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "   Sor           level 0   % 4dx%.3f ms = %.3f GB/s", 2*ctx.post_solves0,    process_finished_query("sor 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "   Jacobi Vertex level 0   % 4dx%.3f ms = %.3f GB/s", ctx.post_corrections0, process_finished_query("jacobi vertex 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Gradient                      %.3f ms = %.3f GB/s",                        process_finished_query("gradient", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, " Advection                         %.3f ms = %.3f GB/s",                                                             process_finished_query("advection", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, " Reduce data                       %.3f ms = %.3f GB/s",                                                             process_finished_query("reduce data", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, " Compute mask                      %.3f ms = %.3f GB/s",                                                             process_finished_query("compute mask", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, " Projection                        %.3f ms = %.3f GB/s",                                                             process_finished_query("projection", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Divergence %s                    %.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ",                        process_finished_query("divergence", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Poisson                          %.3f ms = %.3f GB/s",                                                             process_finished_query("poisson", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "   Zero             level 0        %.3f ms = %.3f GB/s",                                                             process_finished_query("zero 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "   V-Cycle          level 0        %.3f ms = %.3f GB/s",                                                             process_finished_query("vcycle X1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Jacobi          level 0   % 4dx%.3f ms = %.3f GB/s", ctx.pre_smooths0,                                           process_finished_query("jacobi 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Residual        level 0        %.3f ms = %.3f GB/s",                                                             process_finished_query("residual 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Restrict        level 0->1     %.3f ms = %.3f GB/s",                                                             process_finished_query("restrict 1-2", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Zero            level 1        %.3f ms = %.3f GB/s",                                                             process_finished_query("zero 2", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    V-Cycle         level 1        %.3f ms = %.3f GB/s",                                                             process_finished_query("vcycle X2", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Jacobi         level 1   % 4dx%.3f ms = %.3f GB/s", ctx.pre_smooths1,                                           process_finished_query("jacobi 2", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Residual       level 1        %.3f ms = %.3f GB/s",                                                             process_finished_query("residual 2", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Restrict       level 1->2     %.3f ms = %.3f GB/s",                                                             process_finished_query("restrict 2-4", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Zero           level 2        %.3f ms = %.3f GB/s",                                                             process_finished_query("zero 4", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     V-Cycle        level 2        %.3f ms = %.3f GB/s",                                                             process_finished_query("vcycle X4", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "      Sor %s        level 2   % 4dx%.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ", 2*ctx.solves2,         process_finished_query("sor 4", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Prolongate     level 2->1     %.3f ms = %.3f GB/s",                                                             process_finished_query("prolongate 4-2", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "     Jacobi         level 1   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths1,                                          process_finished_query("jacobi 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Prolongate      level 1->0     %.3f ms = %.3f GB/s",                                                             process_finished_query("prolongate 2-1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "    Jacobi          level 0   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths0,                                          process_finished_query("jacobi 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "   Sor              level 0   % 4dx%.3f ms = %.3f GB/s", 2*ctx.post_solves0,                                         process_finished_query("sor 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "   Jacobi Vertex %s level 0   % 4dx%.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ", ctx.post_corrections0, process_finished_query("jacobi vertex 1", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Gradient                      %.3f ms = %.3f GB/s",                                                                process_finished_query("gradient", 100)); pos += dpos
     }
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Lighting                        %.3f ms", time_lighting1+time_lighting2); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Render                          %.3f ms", time_render); pos += 2*dpos
@@ -461,8 +463,12 @@ main :: proc() {
                 ctx.post_corrections0 = ctx.post_corrections0+1
             }
 
-            if .PRESS in input.keys[.P] {
+            if .PRESS in input.keys[.F7] {
                 print_finished_queries()
+            }
+
+            if .PRESS in input.keys[.O] {
+                ctx.use_optimizations = !ctx.use_optimizations
             }
 
             if .PRESS in input.keys[.J] {

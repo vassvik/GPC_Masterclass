@@ -82,14 +82,23 @@ do_sim_step :: proc() {
         
         {
             block_query("projection", ctx.timestep, mem_projection, .Simulation)
-            do_divergence2(divergence_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
+            if ctx.use_optimizations {
+                do_divergence2(divergence_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
+            } else {
+                do_divergence(divergence_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
+            }
             {
                 block_query("poisson", ctx.timestep, int(mem_poisson)*int(ctx.num_voxels[.X1]), .Simulation)
                 gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
                 do_zero_pressure(pressure_ping_texture^, ctx.sizes[.X1])
                 vcycle(.X1, .X4)
                 do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 1.9, ctx.sizes[.X1], ctx.post_solves0)
-                do_jacobi_vertex3(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
+                
+                if ctx.use_optimizations {
+                    do_jacobi_vertex3(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
+                } else {
+                    do_jacobi_vertex(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
+                }
             }
             do_gradient(pressure_ping_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1])
         }

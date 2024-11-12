@@ -1,0 +1,1 @@
+Odin\odin.exe run . -show-timings

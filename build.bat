@@ -1,1 +1,1 @@
-Odin\odin.exe run . -show-timings
+Odin\odin.exe run . -show-timings -o:speed -no-bounds-check

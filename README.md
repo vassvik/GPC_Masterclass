@@ -14,3 +14,7 @@ build.bat
 ## Linux
 
 Install glfw from your favourite package manager, and it should hopefully link properly.
+
+## Slides
+
+https://docs.google.com/presentation/d/1QH9IccSMw0aj_9474awltWbLXz1emj4KUvNyJMvT4Nc/edit?usp=sharing

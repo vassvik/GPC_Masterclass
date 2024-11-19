@@ -22,6 +22,11 @@
             "shell": true,
 
 		    "variants": [
+		    	{
+		        	"working_dir": "${file_path}",
+		            "shell_cmd": "${project_path}/Odin/odin.exe run . -show-timings -o:speed",
+		            "name": "Run Odin Standalone Package",
+		        }
 		    ]
 		}
     ]

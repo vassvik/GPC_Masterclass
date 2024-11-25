@@ -68,6 +68,7 @@ ctx: struct {
     attenuation_texture1: u32,
     
     mask_texture: u32,
+    mask_texture4: u32,
     
     envmap_buffer: u32,
     envmap_texture: u32,
@@ -346,6 +347,7 @@ main :: proc() {
     ctx.lighting_texture1      = make_texture3D(expand_values(ctx.sizes[.X2]),             gl.RGBA16F, gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     ctx.attenuation_texture1   = make_texture3D(expand_values(ctx.sizes[.X2] * {3, 3, 3}), gl.R16F,    gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     ctx.mask_texture           = make_texture3D(expand_values(ctx.sizes[.X1]/8),           gl.R8,      gl.RED,         gl.FLOAT, nil, gl.LINEAR)
+    ctx.mask_texture4           = make_texture3D(expand_values(ctx.sizes[.X1]/4),           gl.R8,      gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     fmt.println("done")
 
     ctx.velocity_x_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)

@@ -12,7 +12,8 @@ layout(binding = 0) uniform sampler3D u_velocity_x_texture;
 layout(binding = 1) uniform sampler3D u_velocity_y_texture;
 layout(binding = 2) uniform sampler3D u_velocity_z_texture;
 layout(binding = 3) uniform sampler3D u_smoke_texture;
-layout(binding = 4) uniform sampler3D u_mask_texture;
+layout(binding = 4) uniform sampler3D u_mask_texture8;
+layout(binding = 5) uniform sampler3D u_mask_texture4;
 
 layout(binding = 0) writeonly uniform image3D u_velocity_x_image;
 layout(binding = 1) writeonly uniform image3D u_velocity_y_image;
@@ -192,7 +193,7 @@ void main() {
     
     vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
 
-    float mask = texture(u_mask_texture, uvw).x; 
+    float mask = texture(u_mask_texture4, uvw).x; 
 
     vec3 velocity;
     if (true) {

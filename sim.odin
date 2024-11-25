@@ -29,6 +29,7 @@ do_sim_step :: proc() {
         gl.BindTextureUnit(2, ctx.velocity_z_textures[.X1]);
         gl.BindTextureUnit(3, ctx.smoke_textures[.X1]);
         gl.BindTextureUnit(4, ctx.mask_texture);
+        gl.BindTextureUnit(5, ctx.mask_texture4);
         gl.BindImageTexture(0, ctx.aux_textures[.X1][0], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
         gl.BindImageTexture(1, ctx.aux_textures[.X1][1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
         gl.BindImageTexture(2, ctx.aux_textures[.X1][2], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
@@ -69,6 +70,7 @@ do_sim_step :: proc() {
 
         gl.BindTextureUnit(0, ctx.smoke_textures[.X1]);
         gl.BindImageTexture(0, ctx.mask_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
+        gl.BindImageTexture(1, ctx.mask_texture4, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
 
         block_query("compute mask", ctx.frame, int(2*ctx.num_voxels[.X1] + 1*ctx.num_voxels[.X1]/(8*8*8)), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
@@ -158,6 +160,7 @@ do_sim_reset :: proc() {
 
         gl.BindTextureUnit(0, ctx.smoke_textures[.X1]);
         gl.BindImageTexture(0, ctx.mask_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
+        gl.BindImageTexture(1, ctx.mask_texture4, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
 
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }

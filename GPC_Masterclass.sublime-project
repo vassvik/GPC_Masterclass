@@ -22,6 +22,16 @@
             "shell": true,
 
 		    "variants": [
+		    	{
+		    		"working_dir": "${file_path}",
+		            "shell_cmd": "${project_path}/Odin/odin run . -show-timings -o:speed -no-bounds-check",
+		            "name": "Run package"
+		        },
+		        {
+		    		"working_dir": "${project_path}/plot",
+		            "shell_cmd": "python plot_series.py",
+		            "name": "Plot Series"
+		        },
 		    ]
 		}
     ]

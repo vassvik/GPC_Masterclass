@@ -295,7 +295,7 @@ main :: proc() {
     gl.Enable(gl.FRAMEBUFFER_SRGB)
 
     fmt.printf("Loading file ... ");
-    vdb_file := "vdbs/sixteenth.bin"
+    vdb_file := "vdbs/quarter.bin"
          if vdb_file == "vdbs/quarter.bin"   do ctx.voxel_size = 0.25
     else if vdb_file == "vdbs/eighth.bin"    do ctx.voxel_size = 0.5
     else if vdb_file == "vdbs/sixteenth.bin" do ctx.voxel_size = 1.0
@@ -397,9 +397,9 @@ main :: proc() {
 
     init_query_pool()
 
-    ctx.theta = f32(100.0)
-    ctx.phi = f32(0.0)
-    ctx.distance = f32(125.0) / f32(ctx.voxel_size)
+    ctx.theta = f32(90.0)
+    ctx.phi = f32(-30.0)
+    ctx.distance = f32(115.0) / f32(ctx.voxel_size)
 
     // Main Loop
 

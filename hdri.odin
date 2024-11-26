@@ -13,10 +13,10 @@ load_and_process_hdri :: proc() -> ([3][3][3]RGB, u32) {
     //p := stbi.loadf("hdris/abandoned_parking_4k.hdr", &x, &y, &c, 3)
     //p := stbi.loadf("hdris/derelict_overpass_4k.hdr", &x, &y, &c, 3)
     //p := stbi.loadf("hdris/rogland_clear_night_4k.hdr", &x, &y, &c, 3)
-    //p := stbi.loadf("hdris/rosendal_plains_2_4k.hdr", &x, &y, &c, 3)
+    p := stbi.loadf("hdris/rosendal_plains_2_4k.hdr", &x, &y, &c, 3)
     //p := stbi.loadf("hdris/sunflowers_4k.hdr", &x, &y, &c, 3)
     //p := stbi.loadf("hdris/lakeside_4k.hdr", &x, &y, &c, 3)
-    p := stbi.loadf("hdris/small_empty_room_3_4k.hdr", &x, &y, &c, 3)
+    //p := stbi.loadf("hdris/small_empty_room_3_4k.hdr", &x, &y, &c, 3)
     //p := stbi.loadf("hdris/ouchy_pier_4k.hdr", &x, &y, &c, 3)
     defer stbi.image_free(p)
 

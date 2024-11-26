@@ -54,7 +54,11 @@ float HenyeyGreenstein(float g, float costh){
 // https://research.nvidia.com/labs/rtr/approximate-mie/
 float evalDraine(in float u, in float g, in float a)
 {
-    return ((1 - g*g)*(1 + a*u*u))/(4.* 3.14159265*(1 + (a*(1 + 2*g*g))/3.) * pow(1 + g*g - 2*g*u,1.5));
+    float N = 1.0 / (4.0*3.14159265);
+    float HG = (1.0 - g*g) / pow(1.0 + g*g - 2*g*u, 3.0/2.0);
+    float R = (1.0 + a*u*u) / (1.0 + a*(1 + 2*g*g)/3.0);
+    //return ((1 - g*g)*(1 + a*u*u))/(4.* 3.14159265*(1 + (a*(1 + 2*g*g))/3.) * pow(1 + g*g - 2*g*u,1.5));
+    return N*HG*R;
 }
 
 float phase_function(ivec3 gid, ivec3 dir) {
@@ -63,16 +67,16 @@ float phase_function(ivec3 gid, ivec3 dir) {
 
     float mu = dot(ray_dir, light_dir);
 
-    float d = 100.0;
-    float g_HG = exp(-0.0990567/(d-1.67154));
+    float d = 15.0;
+    float g_HG = 0.5*exp(-0.0990567/(d-1.67154));
     float g_D = exp(-2.20679/(d+3.91029)-0.428934);
     float a = exp(3.62489 - 8.29288/(d + 5.52825));
     float w_D = exp(-0.599085/(d - 0.641583)-0.665888);
 
-    //return mix(evalDraine(mu, g_HG, 0.0), evalDraine(mu, g_D, a), w_D);
+    return mix(evalDraine(mu, g_HG, 0.0), evalDraine(mu, g_D, a), w_D);
 
     //return 1.0 / (4.0*3.1415);
-    return mix(HenyeyGreenstein(-0.1, mu), HenyeyGreenstein(0.7, mu), 0.8);
+    //return mix(HenyeyGreenstein(-0.1, mu), HenyeyGreenstein(0.7, mu), 0.8);
 }
 
 void main() {    

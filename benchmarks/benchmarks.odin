@@ -255,15 +255,26 @@ main :: proc() {
         }
     }
 
+    init_2D_program := load_compute_program("shaders/init_2D.glsl")
+    reduce1_program := load_compute_program("shaders/reduce1.glsl")
+    if (init_2D_program == 0 || reduce1_program == 0) do return;
+
     Handle :: u32
 
     Texture_Internal_Format :: enum u32 {
         R16F = gl.R16F,
         R32F = gl.R32F,
+        RGBA32F = gl.RGBA32F,
     } 
 
     Texture :: struct {
         size: [3]u32,
+        handle: Handle,
+        internal_format: Texture_Internal_Format,
+    }
+
+    Texture2D :: struct {
+        size: [2]u32,
         handle: Handle,
         internal_format: Texture_Internal_Format,
     }
@@ -274,6 +285,16 @@ main :: proc() {
         gl.TextureParameteri(handle, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.TextureParameteri(handle, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.TextureStorage3D(handle, 1, u32(internal_format), expand_values(linalg.to_i32(size)));
+        gl.ClearTexImage(handle, 0, gl.RED, gl.FLOAT, nil)
+        return {size = size, handle = handle, internal_format = internal_format};
+    }
+
+    make_texture2D :: proc(size: [2]u32, levels: i32, internal_format: Texture_Internal_Format) -> Texture2D {
+        handle: u32;
+        gl.CreateTextures(gl.TEXTURE_2D, 1, &handle);
+        gl.TextureParameteri(handle, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.TextureParameteri(handle, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.TextureStorage2D(handle, levels, u32(internal_format), expand_values(linalg.to_i32(size)));
         gl.ClearTexImage(handle, 0, gl.RED, gl.FLOAT, nil)
         return {size = size, handle = handle, internal_format = internal_format};
     }
@@ -328,7 +349,77 @@ main :: proc() {
         return time, bandwidth
     }
 
+    {
+        glfw.SwapBuffers(window);
+
+        mip_chain_texture := make_texture2D({4096, 4096}, 13, .RGBA32F)
+        flush_texture     := make_texture2D({2*4096, 2*4096}, 13, .R32F)
+
+        {
+            GL_LABEL_BLOCK("Execute")
+
+            {
+                GL_LABEL_BLOCK("Initialize")
+
+                gl.UseProgram(init_2D_program)
+                gl.BindImageTexture(0, mip_chain_texture.handle, 0, gl.TRUE, 0, gl.WRITE_ONLY, u32(mip_chain_texture.internal_format))
+                gl.DispatchCompute(expand_values(mip_chain_texture.size / {16, 16}), 1)
+            }
+            {
+                GL_LABEL_BLOCK("Init Flush")
+
+                gl.UseProgram(init_2D_program)
+                gl.BindImageTexture(0, flush_texture.handle, 0, gl.TRUE, 0, gl.WRITE_ONLY, u32(flush_texture.internal_format))
+                gl.DispatchCompute(expand_values(flush_texture.size / {16, 16}), 1)
+            }
+            {
+                GL_LABEL_BLOCK("Reduce")
+                gl.UseProgram(reduce1_program)
+
+                for i in 0..<12 {
+                    GL_LABEL_BLOCK(fmt.tprintf("Reduce %d -> %d", i, i+1))
+
+                    size := mip_chain_texture.size / (u32(2) << u32(i))
+                    fmt.println(i, size)
+                    gl.Uniform1i(0, i32(i))
+                    gl.BindTextureUnit(0, mip_chain_texture.handle)
+                    gl.BindImageTexture(0, mip_chain_texture.handle, i32(i+0), gl.TRUE, 0, gl.READ_ONLY,  u32(mip_chain_texture.internal_format))
+                    gl.BindImageTexture(1, mip_chain_texture.handle, i32(i+1), gl.TRUE, 0, gl.WRITE_ONLY, u32(mip_chain_texture.internal_format))
+                    gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
+                    gl.DispatchCompute(expand_values((size + 15) / {16, 16}), 1)
+                }
+            }
+
+            {
+                GL_LABEL_BLOCK("Reduce")
+                gl.UseProgram(reduce1_program)
+
+                for i in 0..<12 {
+                    GL_LABEL_BLOCK(fmt.tprintf("Reduce %d -> %d", i, i+1))
+
+                    size := mip_chain_texture.size / (u32(2) << u32(i))
+                    fmt.println(i, size)
+                    gl.Uniform1i(0, i32(i))
+                    gl.BindTextureUnit(0, mip_chain_texture.handle)
+                    gl.BindImageTexture(0, mip_chain_texture.handle, i32(i+0), gl.TRUE, 0, gl.READ_ONLY,  u32(mip_chain_texture.internal_format))
+                    gl.BindImageTexture(1, mip_chain_texture.handle, i32(i+1), gl.TRUE, 0, gl.WRITE_ONLY, u32(mip_chain_texture.internal_format))
+                    gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
+                    gl.DispatchCompute(expand_values((size + 15) / {16, 16}), 1)
+                }
+            }
+        }
+
+        glfw.SwapBuffers(window);
+        glfw.SwapBuffers(window);
+        glfw.SwapBuffers(window);
+
+    }
+    {
+
+    }
+
     for Nz := u32(512); Nz >= 32; Nz /= 2 do for Ny := u32(512); Ny >= 32; Ny /= 2 do for Nx := u32(512); Nx >= 32; Nx /= 2 {
+        if true do break
         N := min(Nx, Ny, Nz)
         dx := 1.0 / f32(N)
 
@@ -643,4 +734,17 @@ load_compute_source :: proc(source: string, loc := #caller_location) -> u32 {
         return 0;
     }
     return program;
+}
+
+BEGIN_GL_LABEL_BLOCK :: proc(name: string) {
+    gl.PushDebugGroup(gl.DEBUG_SOURCE_APPLICATION, 0, i32(len(name)), strings.unsafe_string_to_cstring(name));
+}
+
+END_GL_LABEL_BLOCK :: proc() {
+    gl.PopDebugGroup();
+}
+
+@(deferred_out=END_GL_LABEL_BLOCK)
+GL_LABEL_BLOCK :: proc(name: string) {
+    BEGIN_GL_LABEL_BLOCK(name);
 }

@@ -255,6 +255,81 @@ main :: proc() {
         }
     }
 
+    {
+        source, ok := os.read_entire_file("shaders/box_blur7.glsl", context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+            }
+        }
+    }
+
+    {
+        source, ok := os.read_entire_file("shaders/box_blur8.glsl", context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+            }
+        }
+    }
+
+    {
+        source, ok := os.read_entire_file("shaders/box_blur8a.glsl", context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+            }
+        }
+    }
+
+    {
+        source, ok := os.read_entire_file("shaders/box_blur9.glsl", context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+            }
+        }
+    }
+
+    {
+        source, ok := os.read_entire_file("shaders/box_blur10.glsl", context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+            }
+        }
+    }
+
     init_2D_program := load_compute_program("shaders/init_2D.glsl")
     reduce1_program := load_compute_program("shaders/reduce1.glsl")
     if (init_2D_program == 0 || reduce1_program == 0) do return;
@@ -349,7 +424,7 @@ main :: proc() {
         return time, bandwidth
     }
 
-    {
+    if false {
         glfw.SwapBuffers(window);
 
         mip_chain_texture := make_texture2D({4096, 4096}, 13, .RGBA32F)
@@ -419,7 +494,13 @@ main :: proc() {
     }
 
     for Nz := u32(512); Nz >= 32; Nz /= 2 do for Ny := u32(512); Ny >= 32; Ny /= 2 do for Nx := u32(512); Nx >= 32; Nx /= 2 {
-        if true do break
+        Nz = Nx
+        Ny = Nx
+        defer {
+            //Nx, Ny, Nz = 1, 1, 1
+        }
+
+        //if true do break
         N := min(Nx, Ny, Nz)
         dx := 1.0 / f32(N)
 

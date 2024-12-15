@@ -23,6 +23,7 @@ error_callback :: proc"c"(error: i32, desc: cstring) {
 Program :: struct {
     local_size: [3]u32,
     handle: u32,
+    filename: string,
 }
 
 main :: proc() {
@@ -64,7 +65,8 @@ main :: proc() {
     
     init_programs: [dynamic]Program
     {
-        source, ok := os.read_entire_file("shaders/init_solver.glsl", context.temp_allocator)
+        filename := "shaders/init_solver.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             outer1: for s := 32; s <= 1024; s *= 2 {
                 for k := 1; k <= 16; k *= 2 {
@@ -78,7 +80,7 @@ main :: proc() {
 
                             program := load_compute_source(replaced_source)
                             if program == 0 do break outer1
-                            append(&init_programs, Program{{u32(i), u32(j), u32(k)}, program})
+                            append(&init_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
                         }
                     }
                 }
@@ -88,7 +90,8 @@ main :: proc() {
 
     jacobi_programs: [dynamic]Program
     {
-        source, ok := os.read_entire_file("shaders/iterate_jacobi1.glsl", context.temp_allocator)
+        filename := "shaders/iterate_jacobi1.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             outer2: for s := 32; s <= 1024; s *= 2 {
                 for k := 1; k <= 16; k *= 2 {
@@ -102,7 +105,7 @@ main :: proc() {
 
                             program := load_compute_source(replaced_source)
                             if program == 0 do break outer2
-                            append(&jacobi_programs, Program{{u32(i), u32(j), u32(k)}, program})
+                            append(&jacobi_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
                         }
                     }
                 }
@@ -112,7 +115,8 @@ main :: proc() {
 
     jacobi_programs1_multi: [dynamic]Program
     {
-        source, ok := os.read_entire_file("shaders/iterate_jacobi1_multi.glsl", context.temp_allocator)
+        filename := "shaders/iterate_jacobi1_multi.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             for mode := 0; mode < 8; mode += 1 {
                 replacement := fmt.tprintf("%d", mode)
@@ -121,7 +125,7 @@ main :: proc() {
                 //fmt.println(replaced_source)
                 program := load_compute_source(replaced_source)
                 if program == 0 do break
-                append(&jacobi_programs1_multi, Program{{u32(8+(mode&1)<<3), u32(8+(mode&2)<<2), u32(8+(mode&4)<<1)}, program})
+                append(&jacobi_programs1_multi, Program{{u32(8+(mode&1)<<3), u32(8+(mode&2)<<2), u32(8+(mode&4)<<1)}, program, strings.clone(filename)})
             }
         }
     }
@@ -130,7 +134,8 @@ main :: proc() {
 
     jacobi_programs2: [dynamic]Program
     {
-        source, ok := os.read_entire_file("shaders/iterate_jacobi2.glsl", context.temp_allocator)
+        filename := "shaders/iterate_jacobi2.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             outer3: for s := 32; s <= 1024; s *= 2 {
                 for k := 1; k <= 16; k *= 2 {
@@ -144,7 +149,7 @@ main :: proc() {
 
                             program := load_compute_source(replaced_source)
                             if program == 0 do break outer3
-                            append(&jacobi_programs2, Program{{u32(i), u32(j), u32(k)}, program})
+                            append(&jacobi_programs2, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
                         }
                     }
                 }
@@ -154,7 +159,8 @@ main :: proc() {
 
     jacobi_programs2_multi: [dynamic]Program
     {
-        source, ok := os.read_entire_file("shaders/iterate_jacobi2_multi.glsl", context.temp_allocator)
+        filename := "shaders/iterate_jacobi2_multi.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             for mode := 0; mode < 8; mode += 1 {
                 replacement := fmt.tprintf("%d", mode)
@@ -163,7 +169,7 @@ main :: proc() {
                 //fmt.println(replaced_source)
                 program := load_compute_source(replaced_source)
                 if program == 0 do break
-                append(&jacobi_programs2_multi, Program{{u32(8+(mode&1)<<3), u32(8+(mode&2)<<2), u32(8+(mode&4)<<1)}, program})
+                append(&jacobi_programs2_multi, Program{{u32(8+(mode&1)<<3), u32(8+(mode&2)<<2), u32(8+(mode&4)<<1)}, program, strings.clone(filename)})
             }
         }
     }
@@ -171,7 +177,8 @@ main :: proc() {
 
     box_blur_programs: [dynamic]Program
     {
-        source, ok := os.read_entire_file("shaders/box_blur1.glsl", context.temp_allocator)
+        filename := "shaders/box_blur1.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 8, 8, 8
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -180,12 +187,13 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program})
+                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
             }
         }
     }
     {
-        source, ok := os.read_entire_file("shaders/box_blur2.glsl", context.temp_allocator)
+        filename := "shaders/box_blur2.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 8, 8, 8
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -194,12 +202,13 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program})
+                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
             }
         }
     }
     {
-        source, ok := os.read_entire_file("shaders/box_blur3.glsl", context.temp_allocator)
+        filename := "shaders/box_blur3.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 8, 8, 8
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -208,12 +217,13 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program})
+                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
             }
         }
     }
     {
-        source, ok := os.read_entire_file("shaders/box_blur4.glsl", context.temp_allocator)
+        filename := "shaders/box_blur4.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 8, 8, 8
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -222,12 +232,13 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
     {
-        source, ok := os.read_entire_file("shaders/box_blur5.glsl", context.temp_allocator)
+        filename := "shaders/box_blur5.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 8, 8, 8
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -236,12 +247,13 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
     {
-        source, ok := os.read_entire_file("shaders/box_blur6.glsl", context.temp_allocator)
+        filename := "shaders/box_blur6.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 8, 8, 8
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -250,13 +262,14 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
 
     {
-        source, ok := os.read_entire_file("shaders/box_blur7.glsl", context.temp_allocator)
+        filename := "shaders/box_blur7.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 4, 4, 4
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -265,13 +278,14 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
 
     {
-        source, ok := os.read_entire_file("shaders/box_blur8.glsl", context.temp_allocator)
+        filename := "shaders/box_blur8.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 4, 4, 4
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -280,13 +294,14 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
 
     {
-        source, ok := os.read_entire_file("shaders/box_blur8a.glsl", context.temp_allocator)
+        filename := "shaders/box_blur8a.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 4, 4, 4
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -295,13 +310,14 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
 
     {
-        source, ok := os.read_entire_file("shaders/box_blur9.glsl", context.temp_allocator)
+        filename := "shaders/box_blur8b.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 4, 4, 4
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -310,13 +326,14 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
 
     {
-        source, ok := os.read_entire_file("shaders/box_blur10.glsl", context.temp_allocator)
+        filename := "shaders/box_blur9.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {
             i, j, k := 4, 4, 4
             format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
@@ -325,7 +342,23 @@ main :: proc() {
 
             program := load_compute_source(replaced_source)
             if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program})
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
+            }
+        }
+    }
+
+    {
+        filename := "shaders/box_blur10.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
             }
         }
     }
@@ -785,7 +818,7 @@ main :: proc() {
 
                         time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*2)
                         
-                        fmt.printf("%f \t%.1f \t%.9f\n", time, bw, data)
+                        fmt.printf("%f \t%.1f \t%.9f   %s\n", time, bw, data, program.filename)
                     }
                 }
 

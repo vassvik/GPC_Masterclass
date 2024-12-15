@@ -1,9 +1,7 @@
 #version 460 core
 
-<local_size>
-
 // glDispatchCompute(u_size.x / 8, u_size.y / 8, u_size.z / 8)
-//layout(local_size_x=4, local_size_y=4, local_size_z=4) in;
+layout(local_size_x=4, local_size_y=4, local_size_z=4) in;
 
 layout(location = 0) uniform uvec3 u_size;
 

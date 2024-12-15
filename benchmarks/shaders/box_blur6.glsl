@@ -8,10 +8,8 @@
 #error "Not supported"
 #endif
 
-<local_size>
-
 // glDispatchCompute(u_size.x / 16, u_size.y / 16, u_size.z / 16)
-//layout(local_size_x=8, local_size_y=8, local_size_z=8) in;
+layout(local_size_x=8, local_size_y=8, local_size_z=8) in;
 
 layout(location = 0) uniform uvec3 u_size;
 

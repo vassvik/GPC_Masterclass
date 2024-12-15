@@ -62,7 +62,7 @@ main :: proc() {
         }, allocator)
     }
 
-    readback_single_texel_program := load_compute_program("shaders/readback_single_texel.glsl")
+    readback_single_texel_program := load_compute_file("shaders/readback_single_texel.glsl")
     
     init_programs: [dynamic]Program
     {
@@ -177,211 +177,29 @@ main :: proc() {
 
 
     box_blur_programs: [dynamic]Program
-    {
-        filename := "shaders/box_blur1.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 8, 8, 8
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
-            }
+    load_and_append_program :: proc(programs: ^[dynamic]Program, filename: string, local_size: [3]u32) {
+        program := load_compute_file(filename)
+        if program != 0 {
+            append(programs, Program{local_size, program, strings.clone(filename)})
         }
     }
-    {
-        filename := "shaders/box_blur2.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 8, 8, 8
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-    {
-        filename := "shaders/box_blur3.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 8, 8, 8
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(i), u32(j), u32(k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-    {
-        filename := "shaders/box_blur4.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 8, 8, 8
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-    {
-        filename := "shaders/box_blur5.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 8, 8, 8
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-    {
-        filename := "shaders/box_blur6.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 8, 8, 8
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur7.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur8.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur8a.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur8b.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur8c.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur9.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    {
-        filename := "shaders/box_blur10.glsl"
-        source, ok := os.read_entire_file(filename, context.temp_allocator)
-        if ok {
-            i, j, k := 4, 4, 4
-            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
-            replacement := fmt.tprintf(format, i, j, k)
-            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
-
-            program := load_compute_source(replaced_source)
-            if program != 0 {
-                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
-            }
-        }
-    }
-
-    init_2D_program := load_compute_program("shaders/init_2D.glsl")
-    reduce1_program := load_compute_program("shaders/reduce1.glsl")
+    
+    load_and_append_program(&box_blur_programs, "shaders/box_blur1.glsl",  {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur2.glsl",  {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur3.glsl",  {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur4.glsl",  {16, 16, 16})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur5.glsl",  {16, 16, 16})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur6.glsl",  {16, 16, 16})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur7.glsl",  {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur8.glsl",  {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur8a.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur8b.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur8c.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur9.glsl",  {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur10.glsl", {8, 8, 8})
+    
+    init_2D_program := load_compute_file("shaders/init_2D.glsl")
+    reduce1_program := load_compute_file("shaders/reduce1.glsl")
     if (init_2D_program == 0 || reduce1_program == 0) do return;
 
     Handle :: u32
@@ -550,11 +368,11 @@ main :: proc() {
 
     }
 
-    for Nz := u32(256); Nz >= 32; Nz /= 2 do for Ny := u32(256); Ny >= 32; Ny /= 2 do for Nx := u32(256); Nx >= 32; Nx /= 2 {
+    for Nz := u32(512); Nz >= 32; Nz /= 2 do for Ny := u32(512); Ny >= 32; Ny /= 2 do for Nx := u32(512); Nx >= 32; Nx /= 2 {
         Nz = Nx
         Ny = Nx
         defer {
-            //Nx, Ny, Nz = 1, 1, 1
+            Nx, Ny, Nz = 1, 1, 1
         }
 
         //if true do break
@@ -842,7 +660,7 @@ main :: proc() {
 
                         time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*2)
                         
-                        fmt.printf("%f +/- %f \t%.1f \t%.9f   %s\n", time, err, bw, data, program.filename)
+                        fmt.printf("% 7.1f ± % 5.1f \t%.1f \t%.9f   %s\n", time, err, bw, data, program.filename)
                     }
                 }
 
@@ -856,7 +674,7 @@ main :: proc() {
     }
 }
 
-load_compute_program :: proc(filenames: string) -> u32 {
+load_compute_file :: proc(filenames: string) -> u32 {
     program, success := gl.load_compute_file(filenames);
     if !success {
         fmt.println("Filename:", filenames)

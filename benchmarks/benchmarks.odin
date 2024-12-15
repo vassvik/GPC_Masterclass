@@ -184,20 +184,25 @@ main :: proc() {
         }
     }
     
-    load_and_append_program(&box_blur_programs, "shaders/box_blur1.glsl",  {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur2.glsl",  {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur3.glsl",  {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur4.glsl",  {16, 16, 16})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur5.glsl",  {16, 16, 16})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur6.glsl",  {16, 16, 16})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur7.glsl",  {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur8.glsl",  {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur8a.glsl", {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur8b.glsl", {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur8c.glsl", {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur9.glsl",  {8, 8, 8})
-    load_and_append_program(&box_blur_programs, "shaders/box_blur10.glsl", {8, 8, 8})
-    
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_8x8x8_nocache_signed.glsl",    {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_8x8x8_nocache_unsigned.glsl",  {8, 8, 8})
+    append(&box_blur_programs, Program{})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_8x8x8_cache32_block.glsl",     {8, 8, 8})
+    append(&box_blur_programs, Program{})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_8x8x8_cache32_block.glsl",     {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_16x16x16_cache32_block.glsl",  {16, 16, 16})
+    append(&box_blur_programs, Program{})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_8x8x8_cache32_linear_v1.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_8x8x8_cache32_linear_v2.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_8x8x8_cache32_linear_v3.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_8x8x8_cache32_linear_v4.glsl", {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_16x16x16_cache32_linear.glsl", {16, 16, 16})
+    append(&box_blur_programs, Program{})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_8x8x8_cache16_linear.glsl",    {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_16x16x16_cache16_linear.glsl", {16, 16, 16})
+    append(&box_blur_programs, Program{})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_2x_4x4x4_8x8x8_cache32_linear.glsl", {8, 8, 8})
+
     init_2D_program := load_compute_file("shaders/init_2D.glsl")
     reduce1_program := load_compute_file("shaders/reduce1.glsl")
     if (init_2D_program == 0 || reduce1_program == 0) do return;
@@ -622,6 +627,10 @@ main :: proc() {
             if true {
                 fmt.println("Box Blur")
                 label_programs6: for program, j in box_blur_programs {
+                    if program.handle == 0 {
+                        fmt.println()
+                        continue
+                    }
                     fmt.printf("% 2v = % 4d \t", program.local_size, program.local_size.x*program.local_size.y*program.local_size.z)
                     
                     {
@@ -633,6 +642,7 @@ main :: proc() {
                         gl.BindImageTexture(0, lhs_texture.handle, 0, gl.TRUE, 0, gl.WRITE_ONLY, internal_format);
                         gl.BindImageTexture(1, rhs_texture.handle, 0, gl.TRUE, 0, gl.WRITE_ONLY, internal_format);
                         gl.DispatchCompute(expand_values((lhs_texture.size + init_program.local_size-1) / init_program.local_size))
+                        gl.Flush()
                     }
 
                     elapsed := make([dynamic]u64, context.temp_allocator)

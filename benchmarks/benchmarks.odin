@@ -332,6 +332,22 @@ main :: proc() {
     }
 
     {
+        filename := "shaders/box_blur8c.glsl"
+        source, ok := os.read_entire_file(filename, context.temp_allocator)
+        if ok {
+            i, j, k := 4, 4, 4
+            format := "layout(local_size_x = %d, local_size_y = %d, local_size_z = %d) in;"
+            replacement := fmt.tprintf(format, i, j, k)
+            replaced_source := replace_placeholder(string(source), "<local_size>", replacement, context.temp_allocator)
+
+            program := load_compute_source(replaced_source)
+            if program != 0 {
+                append(&box_blur_programs, Program{{u32(2*i), u32(2*j), u32(2*k)}, program, strings.clone(filename)})
+            }
+        }
+    }
+
+    {
         filename := "shaders/box_blur9.glsl"
         source, ok := os.read_entire_file(filename, context.temp_allocator)
         if ok {

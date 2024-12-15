@@ -2,6 +2,7 @@ package benchmarks
 
 import "core:fmt";
 import "core:os";
+import "core:math";
 import "core:math/linalg";
 import "core:strings";
 import "base:runtime";
@@ -461,16 +462,23 @@ main :: proc() {
         return data
     }
 
-    reduce_queries :: proc(results: []u64, mem_size: int) -> (f64, f64) {
-        avg_time := f64(0.0);
-        for time in results do avg_time += f64(time);
-        avg_time /= f64(len(results));
-        avg_time *= 1.0e-9;
+    reduce_queries :: proc(results: []u64, mem_size: int) -> (f64, f64, f64) {
+        sum1, sum2: u64
+        for time in results do sum1, sum2 = sum1 + time, sum2 + time*time
 
-        time := avg_time * 1.0e3
+        avg_time := f64(sum1) / f64(len(results));
+        avg2_time := f64(sum2) / f64(len(results));
+        
+        std_time := math.sqrt(avg2_time - avg_time*avg_time)
+
+        avg_time *= 1.0e-9;
+        std_time *= 1.0e-9;
+        
+        time := avg_time * 1.0e6
+        err  := std_time * 1.0e6
         bandwidth := f64(mem_size) / avg_time * 1e-9;
 
-        return time, bandwidth
+        return time, err, bandwidth
     }
 
     if false {
@@ -542,7 +550,7 @@ main :: proc() {
 
     }
 
-    for Nz := u32(512); Nz >= 32; Nz /= 2 do for Ny := u32(512); Ny >= 32; Ny /= 2 do for Nx := u32(512); Nx >= 32; Nx /= 2 {
+    for Nz := u32(256); Nz >= 32; Nz /= 2 do for Ny := u32(256); Ny >= 32; Ny /= 2 do for Nx := u32(256); Nx >= 32; Nx /= 2 {
         Nz = Nx
         Ny = Nx
         defer {
@@ -607,9 +615,9 @@ main :: proc() {
                     {
                         data := readback_single_texel(lhs_texture, verify_buffer, readback_single_texel_program)
 
-                        time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*2)
+                        time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*2)
                         
-                        fmt.printf("%f \t%.1f \t%.9f\n", time, bw, data)
+                        fmt.printf("%f \t%.1f \t%.9f\n", time, err, bw, data)
                     }
                 }
 
@@ -652,9 +660,9 @@ main :: proc() {
                     {
                         data := readback_single_texel(lhs_texture, verify_buffer, readback_single_texel_program)
 
-                        time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
+                        time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
                         
-                        fmt.printf("%f \t%.1f \t%.9f\n", time, bw, data)
+                        fmt.printf("%f +/- %f \t%.1f \t%.9f\n", time, err, bw, data)
                     }
                 }
 
@@ -697,9 +705,9 @@ main :: proc() {
                     {
                         data := readback_single_texel(lhs_texture, verify_buffer, readback_single_texel_program)
 
-                        time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
+                        time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
                         
-                        fmt.printf("%f \t%.1f \t%.9f\n", time, bw, data)
+                        fmt.printf("%f +/- %f \t%.1f \t%.9f\n", time, err, bw, data)
                     }
                 }
 
@@ -743,9 +751,9 @@ main :: proc() {
                     {
                         data := readback_single_texel(lhs_texture, verify_buffer, readback_single_texel_program)
 
-                        time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
+                        time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
                         
-                        fmt.printf("%f \t%.1f \t%.9f\n", time, bw, data)
+                        fmt.printf("%f +/- %f \t%.1f \t%.9f\n", time, err, bw, data)
                     }
                 }
             }
@@ -785,9 +793,9 @@ main :: proc() {
                     {
                         data := readback_single_texel(lhs_texture, verify_buffer, readback_single_texel_program)
 
-                        time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
+                        time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*3)
                         
-                        fmt.printf("%f \t%.1f \t%.9f\n", time, bw, data)
+                        fmt.printf("%f +/- %f \t%.1f \t%.9f\n", time, err, bw, data)
                     }
                 }
 
@@ -832,9 +840,9 @@ main :: proc() {
                     {
                         data := readback_single_texel(lhs_texture, verify_buffer, readback_single_texel_program)
 
-                        time, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*2)
+                        time, err, bw := reduce_queries(elapsed[3:], int(Nx)*int(Ny)*int(Nz)*format_size*2)
                         
-                        fmt.printf("%f \t%.1f \t%.9f   %s\n", time, bw, data, program.filename)
+                        fmt.printf("%f +/- %f \t%.1f \t%.9f   %s\n", time, err, bw, data, program.filename)
                     }
                 }
 

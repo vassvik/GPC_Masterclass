@@ -185,6 +185,7 @@ main :: proc() {
     }
     
     load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_8x8x8_nocache_signed.glsl",    {8, 8, 8})
+    load_and_append_program(&box_blur_programs, "shaders/box_blur_4x4x4_4x4x4_nocache_unsigned.glsl",  {4, 4, 4})
     load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_8x8x8_nocache_unsigned.glsl",  {8, 8, 8})
     append(&box_blur_programs, Program{})
     load_and_append_program(&box_blur_programs, "shaders/box_blur_8x8x8_8x8x8_cache32_block.glsl",     {8, 8, 8})
@@ -373,12 +374,28 @@ main :: proc() {
 
     }
 
-    for Nz := u32(512); Nz >= 32; Nz /= 2 do for Ny := u32(512); Ny >= 32; Ny /= 2 do for Nx := u32(512); Nx >= 32; Nx /= 2 {
-        Nz = Nx
-        Ny = Nx
-        defer {
-            Nx, Ny, Nz = 1, 1, 1
-        }
+    for size in ([][3]u32{
+        {512, 512, 512},
+        {512, 512, 256},
+        {512, 256, 256},
+        {256, 256, 256},
+        {256, 256, 128},
+        {256, 128, 128},
+        {128, 128, 128},
+        {128, 128,  64},
+        {128,  64,  64},
+        { 64,  64,  64},
+        { 64,  64,  32},
+        { 64,  32,  32},
+        { 32,  32,  32},
+    }) {
+        Nx, Ny, Nz := expand_values(size)
+    //for Nz := u32(512); Nz >= 32; Nz /= 2 do for Ny := u32(512); Ny >= 32; Ny /= 2 do for Nx := u32(512); Nx >= 32; Nx /= 2 {
+        //Nz = Nx
+        //Ny = Nx
+        //defer {
+        //    Nx, Ny, Nz = 1, 1, 1
+        //}
 
         //if true do break
         N := min(Nx, Ny, Nz)
@@ -651,10 +668,10 @@ main :: proc() {
                         if glfw.GetKey(window, glfw.KEY_ESCAPE) == glfw.PRESS do break label_programs6
                         {
                             gl.UseProgram(program.handle)
-                            if j >= 2 {
-                                gl.Uniform3ui(0, expand_values(linalg.to_u32(lhs_texture.size)))
-                            } else {
+                            if strings.contains(program.filename, "nocache") {
                                 gl.Uniform3i(0, expand_values(linalg.to_i32(lhs_texture.size)))
+                            } else {
+                                gl.Uniform3ui(0, expand_values(linalg.to_u32(lhs_texture.size)))
                             }
                             gl.BindTextureUnit(0, lhs_texture.handle)
                             gl.BindImageTexture(0, lhs_texture2.handle, 0, gl.TRUE, 0, gl.WRITE_ONLY, internal_format);
@@ -680,6 +697,8 @@ main :: proc() {
             glfw.SwapBuffers(window);
             glfw.SwapBuffers(window);
             glfw.SwapBuffers(window);
+
+            break
         }
     }
 }

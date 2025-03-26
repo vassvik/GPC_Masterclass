@@ -295,7 +295,8 @@ main :: proc() {
     gl.Enable(gl.FRAMEBUFFER_SRGB)
 
     fmt.printf("Loading file ... ");
-    vdb_file := "vdbs/quarter.bin"
+    //vdb_file := "vdbs/quarter.bin"
+    vdb_file := "C:/JangaFX/EmberGen/experiments/masterclass/vdb_convert/full.bin"
          if vdb_file == "vdbs/quarter.bin"   do ctx.voxel_size = 0.25
     else if vdb_file == "vdbs/eighth.bin"    do ctx.voxel_size = 0.5
     else if vdb_file == "vdbs/sixteenth.bin" do ctx.voxel_size = 1.0
@@ -307,6 +308,137 @@ main :: proc() {
     coordinates    := mem.slice_data_cast([][3]i32,        data[size_of(Binary_Header)                                 :size_of(Binary_Header)+ctx.header.num_tiles*size_of([3]i32)])
     leaf_node_data := mem.slice_data_cast([]f16,           data[size_of(Binary_Header)+ctx.header.num_tiles*size_of([3]i32):                                                       ])
     fmt.println("done")
+
+    fmt.printf("%#v\n", ctx.header)
+
+    size := [3]i32{i32(ctx.header.Nx), i32(ctx.header.Ny), i32(ctx.header.Nz)}
+    for s in ([]i32{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}) {
+        lower := s * ((ctx.header.offsets + 65536) / s) - 65536
+        upper := s * ((ctx.header.offsets + size + 65536 + s-1) / s) - 65536 - 1
+        fmt.println(s, lower, upper)
+    }
+
+
+    sizes := []i32{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096}
+    counts: [13]int
+
+    m16 := make([]bool, 256*256*256)
+    m32 := make([]bool, 128*128*128)
+    m64 := make([]bool, 64*64*64)
+    m128 := make([]bool, 32*32*32)
+    m256 := make([]bool, 16*16*16)
+    m512 := make([]bool, 8*8*8)
+    m1024 := make([]bool, 4*4*4)
+    m2048 := make([]bool, 2*2*2)
+    m4096 := make([]bool, 1*1*1)
+    fmt.println("asd")
+
+    for c, j in coordinates {
+        m1: int
+        m2: [4][4][4]int
+        m4: [2][2][2]int
+
+        for i in 0..<512 {
+            z := i / 64
+            xy := i - z * 64
+            x := xy % 8
+            y := xy / 8
+            if leaf_node_data[j*512+i] != 0.0 {
+                m1 += 1
+                m2[z/2][y/2][x/2] = 1
+                m4[z/4][y/4][x/4] = 1
+            }
+        }
+        counts[0] += m1
+        for z in m2 do for y in z do for x in y do counts[1] += x
+        for z in m4 do for y in z do for x in y do counts[2] += x
+        if m1 > 0 {
+            counts[3] += 1
+            {
+                Z := c.z / 2
+                Y := c.y / 2
+                X := c.x / 2
+                idx := Z*256*256 + Y*256 + X
+                m16[Z*256*256 + Y*256 + X] = true
+            }
+            {
+                Z := c.z / 4
+                Y := c.y / 4
+                X := c.x / 4
+                idx := Z*128*128 + Y*128 + X
+                m32[Z*128*128 + Y*128 + X] = true
+            }
+            {
+                Z := c.z / 8
+                Y := c.y / 8
+                X := c.x / 8
+                idx := Z*64*64 + Y*64 + X
+                m64[Z*64*64 + Y*64 + X] = true
+            }
+            {
+                Z := c.z / 16
+                Y := c.y / 16
+                X := c.x / 16
+                idx := Z*32*32 + Y*32 + X
+                m128[Z*32*32 + Y*32 + X] = true
+            }
+            {
+                Z := c.z / 32
+                Y := c.y / 32
+                X := c.x / 32
+                idx := Z*16*16 + Y*16 + X
+                m256[Z*16*16 + Y*16 + X] = true
+            }
+            {
+                Z := c.z / 64
+                Y := c.y / 64
+                X := c.x / 64
+                idx := Z*8*8 + Y*8 + X
+                m512[Z*8*8 + Y*8 + X] = true
+            }
+            {
+                Z := c.z / 128
+                Y := c.y / 128
+                X := c.x / 128
+                idx := Z*4*4 + Y*4 + X
+                m1024[Z*4*4 + Y*4 + X] = true
+            }
+            {
+                Z := c.z / 256
+                Y := c.y / 256
+                X := c.x / 256
+                idx := Z*2*2 + Y*2 + X
+                m2048[Z*2*2 + Y*2 + X] = true
+            }
+            {
+                Z := c.z / 512
+                Y := c.y / 512
+                X := c.x / 512
+                idx := Z*1*1 + Y*1 + X
+                m4096[Z*1*1 + Y*1 + X] = true
+            }
+        } 
+    }
+
+    fmt.println("asd")
+
+    for z in m16 do counts[4] += int(z)
+    for z in m32 do counts[5] += int(z)
+    for z in m64 do counts[6] += int(z)
+    for z in m128 do counts[7] += int(z)
+    for z in m256 do counts[8] += int(z)
+    for z in m512 do counts[9] += int(z)
+    for z in m1024 do counts[10] += int(z)
+    for z in m2048 do counts[11] += int(z)
+    for z in m4096 do counts[12] += int(z)
+
+    fmt.println("asd")
+    for i in 0..<13 {
+        N := int(u32(1) << u32(i))
+        fmt.println(N, counts[i], counts[i] * N*N*N)
+    }
+    fmt.println(coordinates[:10])
+    if true do return
 
     {
         data, tex := load_and_process_hdri()

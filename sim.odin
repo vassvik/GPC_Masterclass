@@ -15,6 +15,7 @@ do_sim_step :: proc() {
     mem_poisson := mem_zero + mem_vcycle0 + mem_sor*2*2 + mem_jacobi*f64(ctx.post_corrections0)
     mem_projection := int(mem_divergence + mem_poisson + mem_gradient)*int(num_voxels)
     mem_advection := int(16.0)*int(num_voxels)
+    mem_forces := int(6.0)*int(num_voxels)
     mem_simulation := mem_advection + mem_projection
 
     block_query("simulation", ctx.timestep, mem_simulation, .Simulation)
@@ -52,6 +53,22 @@ do_sim_step :: proc() {
         swap(&ctx.velocity_y_textures[.X1],  &ctx.aux_textures[.X1][1])
         swap(&ctx.velocity_z_textures[.X1],  &ctx.aux_textures[.X1][2])
         swap(&ctx.smoke_textures[.X1],       &ctx.aux_textures[.X1][3])
+    }
+    gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
+    {
+        GL_LABEL_BLOCK("Forces");
+        gl.BindTextureUnit(0, ctx.smoke_textures[.X1]);
+        gl.BindTextureUnit(1, ctx.velocity_z_textures[.X1]);
+        gl.BindImageTexture(0, ctx.velocity_z_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+
+        program := ctx.compute_programs["forces"]
+        gl.UseProgram(program.handle)
+
+        dt := f32(1.0)
+        gl.Uniform1f(0, ctx.smoke_weight * (dt/60.0) / ctx.voxel_size);
+
+        block_query("forces", ctx.timestep, mem_forces, .Simulation)
+        gl.DispatchCompute(expand_values(linalg.to_u32((ctx.sizes[.X1] + program.local_size - 1) / program.local_size)))
     }
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     {

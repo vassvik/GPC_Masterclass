@@ -219,7 +219,7 @@ void main() {
             smoke = 1.0;
         } 
     } 
-    velocity -= vec3(0.0, 0.0, smoke * u_smoke_weight); 
+    //velocity -= vec3(0.0, 0.0, smoke * u_smoke_weight); 
 
     imageStore(u_velocity_x_image,  gid, vec4(velocity.x));
     imageStore(u_velocity_y_image,  gid, vec4(velocity.y));

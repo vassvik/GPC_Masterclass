@@ -21,12 +21,6 @@ layout(binding = 2) writeonly uniform image3D u_velocity_z_image;
 layout(binding = 3) writeonly uniform image3D u_smoke_image;
 layout(binding = 4) writeonly uniform image3D u_temperature_image;
 
-vec3 fetch_velocity(ivec3 gid) {
-    float vx = texelFetch(u_velocity_x_texture, gid, 0).x;
-    float vy = texelFetch(u_velocity_y_texture, gid, 0).x;
-    float vz = texelFetch(u_velocity_z_texture, gid, 0).x;
-    return vec3(vx, vy, vz);
-}
 
 vec3 sample_velocity(vec3 uvw) {
     float vx = texture(u_velocity_x_texture, uvw).x;
@@ -195,7 +189,7 @@ void main() {
 
     vec3 velocity = sample_velocity(uvw);
     
-    //float smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
+    //float smoke = sample_texture_cubic(u_smoke_texture, uvw + 0.0 * u_inverse_size, true);
     float smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
 
     ivec3 s = textureSize(u_smoke_texture, 0);

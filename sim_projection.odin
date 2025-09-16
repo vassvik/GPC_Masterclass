@@ -53,13 +53,17 @@ do_divergence2 :: proc(divergence_texture, velocity_x_texture, velocity_y_textur
     }
 }
 
-do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity_x_texture, velocity_y_texture, velocity_z_texture: u32, size: [3]i32) {
+do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity_x_texture, velocity_y_texture, velocity_z_texture, residual_texture: u32, size: [3]i32) {
     //if true do return
     gl.ClearNamedBufferSubData(ctx.stats_buffer, gl.R32I, 0, 2*32*32*size_of(i32), gl.RED_INTEGER, gl.INT, nil)
     gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, ctx.stats_buffer)
 
     gl.BindTextureUnit(0, divergence_texture1);
     gl.BindTextureUnit(1, divergence_texture2);
+    gl.BindTextureUnit(2, velocity_x_texture);
+    gl.BindTextureUnit(3, velocity_y_texture);
+    gl.BindTextureUnit(4, velocity_z_texture);
+    gl.BindTextureUnit(5, residual_texture);
 
     gl.UseProgram(ctx.compute_programs["compare_divergence"].handle)
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)

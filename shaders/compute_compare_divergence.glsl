@@ -11,6 +11,7 @@ layout(binding = 1) uniform sampler3D u_divergence_texture2;
 layout(binding = 2) uniform sampler3D u_velocity_x_texture;
 layout(binding = 3) uniform sampler3D u_velocity_y_texture;
 layout(binding = 4) uniform sampler3D u_velocity_z_texture;
+layout(binding = 5) uniform sampler3D u_residual_texture;
 
 shared int s_stats[2*32*32];
 
@@ -23,6 +24,7 @@ void main() {
     ivec3 gid = ivec3(gl_GlobalInvocationID);
     float divergence1 = texelFetch(u_divergence_texture1, gid, 0).x;
     float divergence2 = texelFetch(u_divergence_texture2, gid, 0).x;
+    float residual = texelFetch(u_residual_texture, gid, 0).x;
 
     float vx = texture(u_velocity_x_texture, (gid + 0.0) / textureSize(u_velocity_x_texture, 0)).x;
     float vy = texture(u_velocity_y_texture, (gid + 0.0) / textureSize(u_velocity_y_texture, 0)).x;
@@ -32,7 +34,7 @@ void main() {
     if (all(notEqual(gid, ivec3(0)))) {
         int bin1 = int(clamp(24 + log2(abs(divergence1)), 0, 31));
         int bin2 = int(clamp(24 + log2(abs(divergence2)), 0, 31));
-        int bin3 = int(clamp(24 + log2(abs(v)), 0, 31));
+        int bin3 = int(clamp(24 + log2(abs(residual)), 0, 31));
 
         atomicAdd(s_stats[32*bin1+bin2], 1);
         atomicAdd(s_stats[32*32+32*bin3+bin2], 1);

@@ -110,9 +110,9 @@ do_sim_step :: proc() {
                 block_query("poisson", ctx.timestep, int(mem_poisson)*int(ctx.num_voxels[.X1]), .Simulation)
                 gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
                 do_zero_pressure(pressure_ping_texture^, ctx.sizes[.X1])
-                for i in 0..<ctx.post_solves0 do vcycle(.X1, .X4)
+                for i in 0..<ctx.num_cycles do vcycle(.X1, .X4)
                 //vcycle(.X1, .X4)
-                //do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
+                for i in 0..<ctx.post_solves0 do do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
                 
                 //do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 8.0/9.0, ctx.sizes[.X1], ctx.post_solves0)
 
@@ -129,7 +129,7 @@ do_sim_step :: proc() {
 
         if true || ctx.should_step {
             do_divergence(divergence_texture2^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], true)
-            do_compare_divergence(divergence_texture^, divergence_texture2^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1])
+            do_compare_divergence(divergence_texture^, divergence_texture2^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], pressure_pong_texture^, ctx.sizes[.X1])
         }
     }
 

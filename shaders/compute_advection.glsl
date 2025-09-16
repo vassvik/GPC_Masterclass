@@ -193,23 +193,10 @@ void main() {
     
     vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
 
-    float mask = texture(u_mask_texture4, uvw).x; 
-
-    vec3 velocity;
-    if (true) {
-        velocity = sample_velocity(uvw);
-    } else {
-        velocity.x = sample_texture_cubic(u_velocity_x_texture, uvw, false);
-        velocity.y = sample_texture_cubic(u_velocity_y_texture, uvw, false);
-        velocity.z = sample_texture_cubic(u_velocity_z_texture, uvw, false);
-    }
-    float smoke;
-    if (true || mask > 0.0) {
-        //smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
-        smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
-    } else { 
-        smoke = 0.0;
-    }
+    vec3 velocity = sample_velocity(uvw);
+    
+    //float smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
+    float smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
 
     ivec3 s = textureSize(u_smoke_texture, 0);
     int mins = min(s.x, min(s.y, s.z));
@@ -219,7 +206,6 @@ void main() {
             smoke = 1.0;
         } 
     } 
-    //velocity -= vec3(0.0, 0.0, smoke * u_smoke_weight); 
 
     imageStore(u_velocity_x_image,  gid, vec4(velocity.x));
     imageStore(u_velocity_y_image,  gid, vec4(velocity.y));

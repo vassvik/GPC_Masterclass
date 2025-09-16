@@ -169,6 +169,7 @@ update_camera :: proc() {
 }
 
 draw :: proc() {
+    GL_LABEL_BLOCK("Draw");
     gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.main_window.fbo)
 
     do_render() 
@@ -181,6 +182,8 @@ draw :: proc() {
     gl.DrawArrays(gl.TRIANGLES, 0, 3);
 
     {
+        GL_LABEL_BLOCK("Text");
+
         // Stats and info
         @static old_time: f64;
         time := glfw.GetTime();

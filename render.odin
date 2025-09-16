@@ -48,6 +48,8 @@ do_lighting :: proc() {
 }
 
 do_render:: proc() {
+    GL_LABEL_BLOCK("Render");
+
     {
         cp := math.cos(math.to_radians(ctx.phi))
         sp := math.sin(math.to_radians(ctx.phi))

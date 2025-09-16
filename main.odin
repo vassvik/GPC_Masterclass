@@ -111,6 +111,8 @@ ctx: struct {
     post_solves0: int,
     post_corrections0: int,
 
+    post_sor_weight: f32,
+
     pause: bool,
     should_reset: bool,
     should_step: bool,
@@ -128,6 +130,8 @@ ctx: struct {
     post_corrections0 = 0,
 
     smoke_weight = 1.0,
+
+    post_sor_weight = 1.8,
 
     pause = false,
     should_reset = true,

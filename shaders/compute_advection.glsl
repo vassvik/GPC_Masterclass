@@ -205,8 +205,8 @@ void main() {
     }
     float smoke;
     if (true || mask > 0.0) {
-        //smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
-        smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
+        smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
+        //smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
     } else { 
         smoke = 0.0;
     }
@@ -214,8 +214,8 @@ void main() {
     ivec3 s = textureSize(u_smoke_texture, 0);
     int mins = min(s.x, min(s.y, s.z));
 
-    if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(s.x/3, s.y/3, s.z/60+s.z/3)))) {
-        if (all(lessThan(gid.xyz, s/2 + ivec3(s.x/3, s.y/3, s.z/60-s.z/3)))) {
+    if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(mins/3, mins/3, mins/60+mins/3)))) {
+        if (all(lessThan(gid.xyz, s/2 + ivec3(mins/3, mins/3, mins/60-mins/3)))) {
             smoke = 1.0;
         } 
     } 

@@ -113,6 +113,10 @@ do_sim_step :: proc() {
                 vcycle(.X1, .X4)
                 do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
                 
+                //do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 8.0/9.0, ctx.sizes[.X1], ctx.post_solves0)
+
+                do_residual(pressure_ping_texture^, pressure_pong_texture^, divergence_texture^, ctx.sizes[.X1])
+                            
                 //if ctx.use_optimizations {
                 //    do_jacobi_vertex3(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
                 //} else {

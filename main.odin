@@ -126,12 +126,12 @@ ctx: struct {
     solves2 = 32,
     post_smooths1 = 2,
     post_smooths0 = 2,
-    post_solves0 = 2,
+    post_solves0 = 128,
     post_corrections0 = 0,
 
     smoke_weight = 1.0,
 
-    post_sor_weight = 1.9,
+    post_sor_weight = 1.8,
 
     pause = false,
     should_reset = true,

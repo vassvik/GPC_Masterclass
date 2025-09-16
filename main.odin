@@ -350,15 +350,15 @@ main :: proc() {
     ctx.mask_texture4           = make_texture3D(expand_values(ctx.sizes[.X1]/4),           gl.R8,      gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     fmt.println("done")
 
-    ctx.velocity_x_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.velocity_y_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.velocity_z_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.smoke_textures[.X1]       = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.velocity_x_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.velocity_y_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.velocity_z_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.smoke_textures[.X1]       = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
     
     for i in 0..<4 {
-        ctx.aux_textures[.X1][i] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-        ctx.aux_textures[.X2][i] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-        ctx.aux_textures[.X4][i] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R16F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+        ctx.aux_textures[.X1][i] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+        ctx.aux_textures[.X2][i] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+        ctx.aux_textures[.X4][i] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
     }
 
     sum := uint(0)

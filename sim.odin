@@ -30,10 +30,10 @@ do_sim_step :: proc() {
         gl.BindTextureUnit(3, ctx.smoke_textures[.X1]);
         gl.BindTextureUnit(4, ctx.mask_texture);
         gl.BindTextureUnit(5, ctx.mask_texture4);
-        gl.BindImageTexture(0, ctx.aux_textures[.X1][0], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
-        gl.BindImageTexture(1, ctx.aux_textures[.X1][1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
-        gl.BindImageTexture(2, ctx.aux_textures[.X1][2], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
-        gl.BindImageTexture(3, ctx.aux_textures[.X1][3], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ctx.aux_textures[.X1][0], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(1, ctx.aux_textures[.X1][1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(2, ctx.aux_textures[.X1][2], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(3, ctx.aux_textures[.X1][3], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         
         program := ctx.compute_programs["advection"]
         gl.UseProgram(program.handle)
@@ -121,13 +121,13 @@ do_sim_reset :: proc() {
         GL_LABEL_BLOCK("Zero All Data");
         
         gl.UseProgram(ctx.compute_programs["zero"].handle)
-        gl.BindImageTexture(0, ctx.smoke_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ctx.smoke_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1] / 8)))
-        gl.BindImageTexture(0, ctx.velocity_x_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ctx.velocity_x_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1] / 8)))
-        gl.BindImageTexture(0, ctx.velocity_y_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ctx.velocity_y_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1] / 8)))
-        gl.BindImageTexture(0, ctx.velocity_z_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ctx.velocity_z_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1] / 8)))
     }
 
@@ -139,7 +139,7 @@ do_sim_reset :: proc() {
         gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, ctx.bufs[0])
         gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, ctx.bufs[1])
 
-        gl.BindImageTexture(0, ctx.smoke_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ctx.smoke_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
 
         gl.DispatchCompute(ctx.header.num_tiles, 1, 1)
     }

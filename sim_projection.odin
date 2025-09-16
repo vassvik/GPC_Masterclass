@@ -21,7 +21,7 @@ do_divergence :: proc(divergence_texture, velocity_x_texture, velocity_y_texture
     gl.BindTextureUnit(0, velocity_x_texture);
     gl.BindTextureUnit(1, velocity_y_texture);
     gl.BindTextureUnit(2, velocity_z_texture);
-    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     
     gl.UseProgram(ctx.compute_programs["divergence"].handle)
     gl.Uniform1i(0, i32(compute_stats));
@@ -41,7 +41,7 @@ do_divergence2 :: proc(divergence_texture, velocity_x_texture, velocity_y_textur
     gl.BindTextureUnit(0, velocity_x_texture);
     gl.BindTextureUnit(1, velocity_y_texture);
     gl.BindTextureUnit(2, velocity_z_texture);
-    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     
     gl.UseProgram(ctx.compute_programs["divergence2"].handle)
     gl.Uniform1i(0, i32(compute_stats));
@@ -196,9 +196,9 @@ do_gradient :: proc(pressure_texture, velocity_x_texture, velocity_y_texture, ve
     gl.BindTextureUnit(1, velocity_x_texture);
     gl.BindTextureUnit(2, velocity_y_texture);
     gl.BindTextureUnit(3, velocity_z_texture);
-    gl.BindImageTexture(0, velocity_x_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
-    gl.BindImageTexture(1, velocity_y_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
-    gl.BindImageTexture(2, velocity_z_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, velocity_x_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+    gl.BindImageTexture(1, velocity_y_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+    gl.BindImageTexture(2, velocity_z_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     
     gl.UseProgram(ctx.compute_programs["gradient"].handle)
     gl.Uniform3i(0, expand_values(size));
@@ -210,7 +210,7 @@ do_gradient :: proc(pressure_texture, velocity_x_texture, velocity_y_texture, ve
 do_zero_pressure :: proc(pressure_ping_texture: u32, size: [3]i32){
     GL_LABEL_BLOCK("Zero Pressure");
     
-    gl.BindImageTexture(0, pressure_ping_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, pressure_ping_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
 
     gl.UseProgram(ctx.compute_programs["zero"].handle)
     block_query(fmt.tprintf("zero %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*2, .Simulation)
@@ -226,7 +226,7 @@ do_jacobi :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, ome
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("jacobi %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
@@ -243,7 +243,7 @@ do_jacobi_vertex :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
@@ -260,7 +260,7 @@ do_jacobi_vertex2 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: 
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8} / 2))
@@ -277,7 +277,7 @@ do_jacobi_vertex3 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: 
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8} / 2))
@@ -294,7 +294,7 @@ do_jacobi_vertex4 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: 
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
@@ -312,7 +312,7 @@ do_sor :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega:
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<2*iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, ping_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, ping_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.Uniform1i(2, i32(i%2));
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("sor %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
@@ -330,7 +330,7 @@ do_sor2 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega
     gl.BindTextureUnit(1, divergence_texture);
     for i in 0..<1*iterations {
         gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("sor %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6*2, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
@@ -345,7 +345,7 @@ do_residual :: proc(ping_texture, pong_texture: u32, divergence_texture: u32, si
     gl.Uniform3i(0, expand_values(size));
     gl.BindTextureUnit(1, divergence_texture);
     gl.BindTextureUnit(0, ping_texture);
-    gl.BindImageTexture(0, pong_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, pong_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     block_query(fmt.tprintf("residual %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
     gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
@@ -357,7 +357,7 @@ do_restrict :: proc(residual_texture: u32, divergence_texture: u32, fine_size, c
     gl.UseProgram(ctx.compute_programs["restrict"].handle)
     gl.Uniform3i(0, expand_values(fine_size));
     gl.BindTextureUnit(0, residual_texture);
-    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     block_query(fmt.tprintf("restrict %d-%d", ctx.sizes[.X1].x/fine_size.x, ctx.sizes[.X1].x/coarse_size.x), ctx.timestep, int(coarse_size.x*coarse_size.y*coarse_size.z)*(8+1)*2, .Simulation)
     gl.DispatchCompute(expand_values(linalg.to_u32(coarse_size) / {8, 8, 8}))
@@ -370,7 +370,7 @@ do_prolongate :: proc(coarse_pressure_texture, fine_pressure_texture: u32, coars
     gl.Uniform3i(0, expand_values(coarse_size));
     gl.BindTextureUnit(0, coarse_pressure_texture);
     gl.BindTextureUnit(1, fine_pressure_texture);
-    gl.BindImageTexture(0, fine_pressure_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R16F);
+    gl.BindImageTexture(0, fine_pressure_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     block_query(fmt.tprintf("prolongate %d-%d", ctx.sizes[.X1].x/coarse_size.x, ctx.sizes[.X1].x/fine_size.x), ctx.timestep, int(coarse_size.x*coarse_size.y*coarse_size.z)*(1+8+8)*2, .Simulation)
     gl.DispatchCompute(expand_values(linalg.to_u32(fine_size) / {8, 8, 8}))

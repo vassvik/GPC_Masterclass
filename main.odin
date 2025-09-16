@@ -131,7 +131,7 @@ ctx: struct {
 
     smoke_weight = 1.0,
 
-    post_sor_weight = 1.8,
+    post_sor_weight = 1.9,
 
     pause = false,
     should_reset = true,

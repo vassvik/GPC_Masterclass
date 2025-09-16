@@ -19,6 +19,6 @@ void main() {
     float vz = texelFetch(u_velocity_z_texture, gid + ivec3(0, 0, 0), 0).x;
     vz += s * u_smoke_weight;
 
-    if (any(equal(gid, ivec3(0)))) vz = 0.0;
+    if (gid.x == 0 || gid.y == 0) vz = 0.0;
     imageStore(u_velocity_z_image, gid, vec4(vz, 0, 0, 0));
 }

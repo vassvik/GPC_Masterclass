@@ -205,6 +205,7 @@ void main() {
 
         imageStore(u_smoke_image, gid, vec4(smoke));
     }
+
     {
         // velocity x
         vec3 v0 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.0    * u_dt) * u_inverse_size);
@@ -216,7 +217,8 @@ void main() {
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
         float velocity_x = sample_texture(u_velocity_x_texture, uvw);
 
-        if (any(equal(gid, ivec3(0)))) velocity_x = 0.0;
+        
+        if (gid.y == 0 || gid.z == 0) velocity_x = 0.0;
         
         imageStore(u_velocity_x_image,  gid, vec4(velocity_x));
     } 
@@ -232,7 +234,7 @@ void main() {
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
         float velocity_y = sample_texture(u_velocity_y_texture, uvw);
 
-        if (any(equal(gid, ivec3(0)))) velocity_y = 0.0;
+        if (gid.x == 0 || gid.z == 0) velocity_y = 0.0;
         
         imageStore(u_velocity_y_image,  gid, vec4(velocity_y));
     }
@@ -248,7 +250,7 @@ void main() {
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
         float velocity_z = sample_texture(u_velocity_z_texture, uvw);
 
-        if (any(equal(gid, ivec3(0)))) velocity_z = 0.0;
+        if (gid.x == 0 || gid.y == 0) velocity_z = 0.0;
         
         imageStore(u_velocity_z_image,  gid, vec4(velocity_z));
     }

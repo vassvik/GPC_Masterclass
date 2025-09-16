@@ -31,9 +31,13 @@ void main() {
     float vy = texelFetch(u_velocity_y_texture, gid, 0).x - (py - p0);
     float vz = texelFetch(u_velocity_z_texture, gid, 0).x - (pz - p0);
 
-    if (any(equal(gid, ivec3(0)))) {
+    if (gid.y == 0 || gid.z == 0) {
         vx = 0.0;
+    }
+    if (gid.x == 0 || gid.z == 0) {
         vy = 0.0;
+    }
+    if (gid.x == 0 || gid.y == 0) {
         vz = 0.0;
     }
     imageStore(u_velocity_x_image, gid, vec4(vx));

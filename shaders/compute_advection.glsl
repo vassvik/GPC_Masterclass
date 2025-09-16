@@ -185,7 +185,7 @@ float sample_texture_cubic(sampler3D s, vec3 uvw, bool always_clamp_lower) {
 void main() {
     ivec3 gid = ivec3(gl_GlobalInvocationID);
 
-    vec3 v0 = fetch_velocity(gid);
+    vec3 v0 = sample_velocity((gid + 0.5 - 0.0    * u_dt) * u_inverse_size);
     vec3 v1 = sample_velocity((gid + 0.5 - 0.5*v0 * u_dt) * u_inverse_size);
     vec3 v2 = sample_velocity((gid + 0.5 - 0.5*v1 * u_dt) * u_inverse_size);
     vec3 v3 = sample_velocity((gid + 0.5 - 1.0*v2 * u_dt) * u_inverse_size);
@@ -205,8 +205,8 @@ void main() {
     }
     float smoke;
     if (true || mask > 0.0) {
-        smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
-        //smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
+        //smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
+        smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
     } else { 
         smoke = 0.0;
     }

@@ -204,19 +204,19 @@ void main() {
         velocity.z = sample_texture_cubic(u_velocity_z_texture, uvw, false);
     }
     float smoke;
-    if (mask > 0.0) {
-        smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
-        //smoke = sample_texture(u_smoke_texture, uvw);
-    } else {
+    if (true || mask > 0.0) {
+        //smoke = sample_texture_cubic(u_smoke_texture, uvw, true);
+        smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
+    } else { 
         smoke = 0.0;
     }
 
     ivec3 s = textureSize(u_smoke_texture, 0);
     int mins = min(s.x, min(s.y, s.z));
 
-    if (all(greaterThanEqual(gid.xy, s.xy/2+ivec2(0, 2*s.y/4)-int(2.5/u_voxel_size)))) {
-        if (all(lessThan(gid.xy,     s.xy/2+ivec2(0, 2*s.y/4)+int(2.5/u_voxel_size)))) {
-            velocity.yz += vec2(-2.0, 0.0) / u_voxel_size;
+    if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(s.x/3, s.y/3, s.z/60+s.z/3)))) {
+        if (all(lessThan(gid.xyz, s/2 + ivec3(s.x/3, s.y/3, s.z/60-s.z/3)))) {
+            smoke = 1.0;
         } 
     } 
     velocity -= vec3(0.0, 0.0, smoke * u_smoke_weight); 

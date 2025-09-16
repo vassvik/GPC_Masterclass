@@ -132,7 +132,7 @@ do_sim_reset :: proc() {
     }
 
     gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
-    {
+    if false {
         GL_LABEL_BLOCK("Copy Leaf Data");
         gl.UseProgram(ctx.compute_programs["copy_leaves"].handle)
 

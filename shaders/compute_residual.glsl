@@ -19,27 +19,22 @@ void main() {
 
     float divergence = texelFetch(u_divergence_texture, gid, 0).x;
 
-    float p_mmm = fetch_pressure(gid + ivec3(-1, -1, -1));
-    float p_pmm = fetch_pressure(gid + ivec3(+1, -1, -1));
-    float p_mpm = fetch_pressure(gid + ivec3(-1, +1, -1));
-    float p_ppm = fetch_pressure(gid + ivec3(+1, +1, -1));
-    float p_000 = fetch_pressure(gid + ivec3( 0,  0,  0));
-    float p_mmp = fetch_pressure(gid + ivec3(-1, -1, +1));
-    float p_pmp = fetch_pressure(gid + ivec3(+1, -1, +1));
-    float p_mpp = fetch_pressure(gid + ivec3(-1, +1, +1));
-    float p_ppp = fetch_pressure(gid + ivec3(+1, +1, +1));
+    float p_0  = fetch_pressure(gid + ivec3( 0,  0,  0));
+    float p_xm = fetch_pressure(gid + ivec3(-1,  0,  0));
+    float p_xp = fetch_pressure(gid + ivec3(+1,  0,  0));
+    float p_ym = fetch_pressure(gid + ivec3( 0, -1,  0));
+    float p_yp = fetch_pressure(gid + ivec3( 0, +1,  0));
+    float p_zm = fetch_pressure(gid + ivec3( 0,  0, -1));
+    float p_zp = fetch_pressure(gid + ivec3( 0,  0, +1));
 
-    float r = 4.0 * divergence;
-    r += p_ppp;
-    r += p_ppm;
-    r += p_pmp;
-    r += p_pmm;
-    r += p_mpp;
-    r += p_mpm;
-    r += p_mmp;
-    r += p_mmm;
-    r -= 8.0 * p_000;
-    r /= 4.0;
+    float r = divergence;
+    r += p_xm;
+    r += p_xp;
+    r += p_ym;
+    r += p_yp;
+    r += p_zm;
+    r += p_zp;
+    r -= 6.0 * p_0;
 
     if (any(equal(gid, ivec3(0)))) r = 0.0;
     imageStore(u_residual_image, gid, vec4(r));

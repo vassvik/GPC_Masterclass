@@ -121,13 +121,15 @@ ctx: struct {
 } = {
     pre_smooths0 = 2,
     pre_smooths1 = 3,
-    solves2 = 16,
+    solves2 = 32,
     post_smooths1 = 2,
-    post_smooths0 = 1,
-    post_solves0 = 1,
-    post_corrections0 = 1,
+    post_smooths0 = 2,
+    post_solves0 = 2,
+    post_corrections0 = 0,
 
-    pause = true,
+    smoke_weight = 1.0,
+
+    pause = false,
     should_reset = true,
 }
 

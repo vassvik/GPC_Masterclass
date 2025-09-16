@@ -23,9 +23,9 @@ layout(binding = 4) writeonly uniform image3D u_temperature_image;
 
 
 vec3 sample_velocity(vec3 uvw) {
-    float vx = texture(u_velocity_x_texture, uvw).x;
-    float vy = texture(u_velocity_y_texture, uvw).x;
-    float vz = texture(u_velocity_z_texture, uvw).x;
+    float vx = texture(u_velocity_x_texture, uvw - vec3(0.5, 0.0, 0.0) * u_inverse_size).x;
+    float vy = texture(u_velocity_y_texture, uvw - vec3(0.0, 0.5, 0.0) * u_inverse_size).x;
+    float vz = texture(u_velocity_z_texture, uvw - vec3(0.0, 0.0, 0.5) * u_inverse_size).x;
     return vec3(vx, vy, vz);
 }
 
@@ -179,30 +179,77 @@ float sample_texture_cubic(sampler3D s, vec3 uvw, bool always_clamp_lower) {
 void main() {
     ivec3 gid = ivec3(gl_GlobalInvocationID);
 
-    vec3 v0 = sample_velocity((gid + 0.5 - 0.0    * u_dt) * u_inverse_size);
-    vec3 v1 = sample_velocity((gid + 0.5 - 0.5*v0 * u_dt) * u_inverse_size);
-    vec3 v2 = sample_velocity((gid + 0.5 - 0.5*v1 * u_dt) * u_inverse_size);
-    vec3 v3 = sample_velocity((gid + 0.5 - 1.0*v2 * u_dt) * u_inverse_size);
-    vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
-    
-    vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
+    {
+        // smoke
+        vec3 v0 = sample_velocity((gid + 0.5 - 0.0    * u_dt) * u_inverse_size);
+        vec3 v1 = sample_velocity((gid + 0.5 - 0.5*v0 * u_dt) * u_inverse_size);
+        vec3 v2 = sample_velocity((gid + 0.5 - 0.5*v1 * u_dt) * u_inverse_size);
+        vec3 v3 = sample_velocity((gid + 0.5 - 1.0*v2 * u_dt) * u_inverse_size);
+        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        
+        vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
 
-    vec3 velocity = sample_velocity(uvw);
-    
-    //float smoke = sample_texture_cubic(u_smoke_texture, uvw + 0.0 * u_inverse_size, true);
-    float smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
+        //float smoke = sample_texture_cubic(u_smoke_texture, uvw + 0.0 * u_inverse_size, true);
+        float smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
+        
+        ivec3 s = textureSize(u_smoke_texture, 0);
+        int mins = min(s.x, min(s.y, s.z));
 
-    ivec3 s = textureSize(u_smoke_texture, 0);
-    int mins = min(s.x, min(s.y, s.z));
-
-    if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(mins/3, mins/3, mins/60+mins/3)))) {
-        if (all(lessThan(gid.xyz, s/2 + ivec3(mins/3, mins/3, mins/60-mins/3)))) {
-            smoke = 1.0;
+        if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(mins/3, mins/3, mins/60+mins/3)))) {
+            if (all(lessThan(gid.xyz, s/2 + ivec3(mins/3, mins/3, mins/60-mins/3)))) {
+                smoke = 1.0;
+            } 
         } 
+
+        if (any(equal(gid, ivec3(0)))) smoke = 0.0;
+
+        imageStore(u_smoke_image, gid, vec4(smoke));
+    }
+    {
+        // velocity x
+        vec3 v0 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.0    * u_dt) * u_inverse_size);
+        vec3 v1 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.5*v0 * u_dt) * u_inverse_size);
+        vec3 v2 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.5*v1 * u_dt) * u_inverse_size);
+        vec3 v3 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 1.0*v2 * u_dt) * u_inverse_size);
+        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        
+        vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
+        float velocity_x = sample_texture(u_velocity_x_texture, uvw);
+
+        if (any(equal(gid, ivec3(0)))) velocity_x = 0.0;
+        
+        imageStore(u_velocity_x_image,  gid, vec4(velocity_x));
     } 
 
-    imageStore(u_velocity_x_image,  gid, vec4(velocity.x));
-    imageStore(u_velocity_y_image,  gid, vec4(velocity.y));
-    imageStore(u_velocity_z_image,  gid, vec4(velocity.z));
-    imageStore(u_smoke_image,       gid, vec4(smoke));
+    {
+        // velocity y
+        vec3 v0 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 0.0    * u_dt) * u_inverse_size);
+        vec3 v1 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 0.5*v0 * u_dt) * u_inverse_size);
+        vec3 v2 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 0.5*v1 * u_dt) * u_inverse_size);
+        vec3 v3 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 1.0*v2 * u_dt) * u_inverse_size);
+        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        
+        vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
+        float velocity_y = sample_texture(u_velocity_y_texture, uvw);
+
+        if (any(equal(gid, ivec3(0)))) velocity_y = 0.0;
+        
+        imageStore(u_velocity_y_image,  gid, vec4(velocity_y));
+    }
+
+    {
+        // velocity z
+        vec3 v0 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 0.0    * u_dt) * u_inverse_size);
+        vec3 v1 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 0.5*v0 * u_dt) * u_inverse_size);
+        vec3 v2 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 0.5*v1 * u_dt) * u_inverse_size);
+        vec3 v3 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 1.0*v2 * u_dt) * u_inverse_size);
+        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        
+        vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
+        float velocity_z = sample_texture(u_velocity_z_texture, uvw);
+
+        if (any(equal(gid, ivec3(0)))) velocity_z = 0.0;
+        
+        imageStore(u_velocity_z_image,  gid, vec4(velocity_z));
+    }
 }

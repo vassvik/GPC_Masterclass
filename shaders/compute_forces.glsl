@@ -15,10 +15,10 @@ void main() {
     float s0 = texelFetch(u_smoke_texture, gid + ivec3(0, 0, 0), 0).x;
     float s1 = texelFetch(u_smoke_texture, gid + ivec3(0, 0, 1), 0).x;
     float s = (s0 + s1) / 2.0;
-    s = s0;
 
     float vz = texelFetch(u_velocity_z_texture, gid + ivec3(0, 0, 0), 0).x;
     vz += s * u_smoke_weight;
 
+    if (any(equal(gid, ivec3(0)))) vz = 0.0;
     imageStore(u_velocity_z_image, gid, vec4(vz, 0, 0, 0));
 }

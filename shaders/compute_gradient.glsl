@@ -18,35 +18,25 @@ float fetch_pressure(ivec3 gid) {
     return texelFetch(u_pressure_texture, gid, 0).x;
 }
 
-vec3 fetch_velocity(ivec3 gid) {
-    float vx = texelFetch(u_velocity_x_texture, gid, 0).x;
-    float vy = texelFetch(u_velocity_y_texture, gid, 0).x;
-    float vz = texelFetch(u_velocity_z_texture, gid, 0).x;
-    return vec3(vx, vy, vz);
-}
 
 void main() {
     ivec3 gid = ivec3(gl_GlobalInvocationID);
 
-    float p_000 = fetch_pressure(gid + ivec3( 0,  0,  0));
-    float p_100 = fetch_pressure(gid + ivec3(+1,  0,  0));
-    float p_010 = fetch_pressure(gid + ivec3( 0, +1,  0));
-    float p_110 = fetch_pressure(gid + ivec3(+1, +1,  0));
-    float p_001 = fetch_pressure(gid + ivec3( 0,  0, +1));
-    float p_101 = fetch_pressure(gid + ivec3(+1,  0, +1));
-    float p_011 = fetch_pressure(gid + ivec3( 0, +1, +1));
-    float p_111 = fetch_pressure(gid + ivec3(+1, +1, +1));
+    float p0 = fetch_pressure(gid + ivec3(0, 0, 0));
+    float px = fetch_pressure(gid + ivec3(1, 0, 0));
+    float py = fetch_pressure(gid + ivec3(0, 1, 0));
+    float pz = fetch_pressure(gid + ivec3(0, 0, 1));
 
-    float pW = 0.25 * (p_000 + p_010 + p_001 + p_011);
-    float pE = 0.25 * (p_100 + p_110 + p_101 + p_111);
-    float pS = 0.25 * (p_000 + p_100 + p_001 + p_101);
-    float pN = 0.25 * (p_010 + p_110 + p_011 + p_111);
-    float pD = 0.25 * (p_000 + p_100 + p_010 + p_110);
-    float pU = 0.25 * (p_001 + p_101 + p_011 + p_111);
+    float vx = texelFetch(u_velocity_x_texture, gid, 0).x - (px - p0);
+    float vy = texelFetch(u_velocity_y_texture, gid, 0).x - (py - p0);
+    float vz = texelFetch(u_velocity_z_texture, gid, 0).x - (pz - p0);
 
-    vec3 v = fetch_velocity(gid) - vec3(pE - pW, pN - pS, pU - pD);
-
-    imageStore(u_velocity_x_image, gid, vec4(v.x));
-    imageStore(u_velocity_y_image, gid, vec4(v.y));
-    imageStore(u_velocity_z_image, gid, vec4(v.z));
+    if (any(equal(gid, ivec3(0)))) {
+        vx = 0.0;
+        vy = 0.0;
+        vz = 0.0;
+    }
+    imageStore(u_velocity_x_image, gid, vec4(vx));
+    imageStore(u_velocity_y_image, gid, vec4(vy));
+    imageStore(u_velocity_z_image, gid, vec4(vz));
 }

@@ -113,11 +113,11 @@ do_sim_step :: proc() {
                 vcycle(.X1, .X4)
                 do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 1.9, ctx.sizes[.X1], ctx.post_solves0)
                 
-                if ctx.use_optimizations {
-                    do_jacobi_vertex3(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
-                } else {
-                    do_jacobi_vertex(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
-                }
+                //if ctx.use_optimizations {
+                //    do_jacobi_vertex3(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
+                //} else {
+                //    do_jacobi_vertex(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
+                //}
             }
             do_gradient(pressure_ping_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1])
         }

@@ -460,11 +460,11 @@ main :: proc() {
             }
 
             if .PRESS in input.keys[.LEFT] {
-                ctx.post_corrections0 = max(0, ctx.post_corrections0-1)
+                ctx.post_solves0 = max(0, ctx.post_solves0-int(mul))
             }
 
             if .PRESS in input.keys[.RIGHT] {
-                ctx.post_corrections0 = ctx.post_corrections0+1
+                ctx.post_solves0 = ctx.post_solves0+int(mul)
             }
 
             if .PRESS in input.keys[.F7] {

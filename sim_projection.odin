@@ -24,7 +24,6 @@ do_divergence :: proc(divergence_texture, velocity_x_texture, velocity_y_texture
     gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
     
     gl.UseProgram(ctx.compute_programs["divergence"].handle)
-    gl.Uniform1i(0, i32(compute_stats));
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     if compute_stats {
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))

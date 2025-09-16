@@ -110,8 +110,9 @@ do_sim_step :: proc() {
                 block_query("poisson", ctx.timestep, int(mem_poisson)*int(ctx.num_voxels[.X1]), .Simulation)
                 gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
                 do_zero_pressure(pressure_ping_texture^, ctx.sizes[.X1])
-                vcycle(.X1, .X4)
-                do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
+                for i in 0..<ctx.post_solves0 do vcycle(.X1, .X4)
+                //vcycle(.X1, .X4)
+                //do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
                 
                 //do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 8.0/9.0, ctx.sizes[.X1], ctx.post_solves0)
 

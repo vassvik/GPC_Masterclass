@@ -122,18 +122,18 @@ ctx: struct {
     use_optimizations: bool,
 } = {
     pre_smooths0 = 2,
-    pre_smooths1 = 3,
+    pre_smooths1 = 2,
     solves2 = 32,
-    post_smooths1 = 2,
+    post_smooths1 = 4,
     post_smooths0 = 2,
-    post_solves0 = 128,
+    post_solves0 = 1,
     post_corrections0 = 0,
 
     smoke_weight = 1.0,
 
     post_sor_weight = 1.8,
 
-    pause = false,
+    pause = true,
     should_reset = true,
 }
 

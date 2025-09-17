@@ -138,7 +138,7 @@ ctx: struct {
     smoke_weight = 59.999,
 
     post_sor_weight = 1.9,
-    smooth_omega = 1.0,
+    smooth_omega = 6.0/7.0,
 
     pause = true,
     should_reset = true,

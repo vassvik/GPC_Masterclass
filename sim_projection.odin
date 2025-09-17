@@ -411,7 +411,8 @@ vcycle :: proc(current_level, max_level: Resolution) {
     pressure_ping_texture1 := &ctx.aux_textures[next_level][1]
     pressure_pong_texture1 := &ctx.aux_textures[next_level][2]
 
-    do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.pre_smooths0 if current_level == .X1 else ctx.pre_smooths1)
+    //do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.pre_smooths0 if current_level == .X1 else ctx.pre_smooths1)
+    do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.pre_smooths0 if current_level == .X1 else ctx.pre_smooths1)
 
     do_residual(pressure_ping_texture0^, pressure_pong_texture0^, divergence_texture0^, ctx.sizes[current_level])
     do_restrict(pressure_pong_texture0^, divergence_texture1^, ctx.sizes[current_level], ctx.sizes[next_level])
@@ -422,5 +423,5 @@ vcycle :: proc(current_level, max_level: Resolution) {
     do_prolongate(pressure_ping_texture1^, pressure_ping_texture0^, ctx.sizes[next_level], ctx.sizes[current_level])
     
     do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X1 else ctx.post_smooths1)
-    //do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, 6.0/7.0, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X2 else ctx.post_smooths1)
+    do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X1 else ctx.post_smooths1)
 }

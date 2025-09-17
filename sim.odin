@@ -92,7 +92,7 @@ do_sim_step :: proc() {
         block_query("compute mask", ctx.frame, int(2*ctx.num_voxels[.X1] + 1*ctx.num_voxels[.X1]/(8*8*8)), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }
-    {
+    for _ in 0..<1 {
         GL_LABEL_BLOCK("Projection");
         divergence_texture    := &ctx.aux_textures[.X1][0]
         pressure_ping_texture := &ctx.aux_textures[.X1][1]
@@ -112,8 +112,8 @@ do_sim_step :: proc() {
                 do_zero_pressure(pressure_ping_texture^, ctx.sizes[.X1])
                 for i in 0..<ctx.num_cycles do vcycle(.X1, .X4)
                 //vcycle(.X1, .X4)
-                do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
-                //do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 6.0/7.0, ctx.sizes[.X1], ctx.post_solves0)
+                //do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
+                do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 6.0/7.0, ctx.sizes[.X1], ctx.post_solves0)
                 do_residual(pressure_ping_texture^, pressure_pong_texture^, divergence_texture^, ctx.sizes[.X1])
                             
                 //if ctx.use_optimizations {
@@ -130,6 +130,7 @@ do_sim_step :: proc() {
             do_compare_divergence(divergence_texture^, divergence_texture2^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], pressure_pong_texture^, ctx.sizes[.X1])
         }
     }
+    
 
     ctx.should_step = false
     ctx.timestep += 1

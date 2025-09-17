@@ -134,6 +134,8 @@ do_sim_step :: proc() {
 
     ctx.should_step = false
     ctx.timestep += 1
+    ctx.frame += 1
+
 }
 
 do_sim_reset :: proc() {
@@ -185,4 +187,5 @@ do_sim_reset :: proc() {
 
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }
+    ctx.frame = 0
 }

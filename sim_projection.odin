@@ -400,9 +400,9 @@ vcycle :: proc(current_level, max_level: Resolution) {
         pressure_pong_texture := &ctx.aux_textures[current_level][2]
 
         if ctx.use_optimizations {
-            do_sor2(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 1.8, ctx.sizes[current_level], ctx.solves2)
+            do_sor2(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[current_level], ctx.solves2)
         } else {
-            do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 1.8, ctx.sizes[current_level], ctx.solves2)
+            do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[current_level], ctx.solves2)
         }
         return
     }

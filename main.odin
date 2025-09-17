@@ -135,7 +135,7 @@ ctx: struct {
     post_solves0 = 0,
     post_corrections0 = 0,
 
-    smoke_weight = 59.999,
+    smoke_weight = 1,
 
     post_sor_weight = 1.9,
     smooth_omega = 6.0/7.0,
@@ -215,7 +215,8 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Resolution %v", ctx.sizes[.X1]); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Density Scale %.3f", ctx.density_scale_base); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Frame Time %.3f ms", 1000*delta_time); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.timestep); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "Frame %d", ctx.timestep); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.frame); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Smooth omega %.3f", ctx.smooth_omega); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Post SOR omega %.3f", ctx.post_sor_weight); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Simulation                      %.3f ms = %.3f GB/s = %.3f Bvox/s", time_simulation, bw_simulation, sim_speed); pos += dpos
@@ -571,6 +572,7 @@ main :: proc() {
                 ctx.should_step = true
             }
 
+
             {
                 mul := 1
                 if .DOWN in input.keys[.LEFT_SHIFT] || .DOWN in input.keys[.RIGHT_SHIFT] {
@@ -619,7 +621,6 @@ main :: proc() {
         do_lighting()
 
         draw()
-        ctx.frame += 1
 
         glfw.SwapBuffers(ctx.main_window.handle);
         clear_input();

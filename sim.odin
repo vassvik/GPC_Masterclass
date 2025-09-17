@@ -92,7 +92,7 @@ do_sim_step :: proc() {
         block_query("compute mask", ctx.frame, int(2*ctx.num_voxels[.X1] + 1*ctx.num_voxels[.X1]/(8*8*8)), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }
-    for _ in 0..<1 {
+    for _ in 0..<2 {
         GL_LABEL_BLOCK("Projection");
         divergence_texture    := &ctx.aux_textures[.X1][0]
         pressure_ping_texture := &ctx.aux_textures[.X1][1]

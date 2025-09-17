@@ -135,9 +135,9 @@ ctx: struct {
     post_solves0 = 0,
     post_corrections0 = 0,
 
-    smoke_weight = 1.0,
+    smoke_weight = 59.999,
 
-    post_sor_weight = 1.5,
+    post_sor_weight = 1.9,
     smooth_omega = 1.0,
 
     pause = true,
@@ -217,6 +217,7 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Frame Time %.3f ms", 1000*delta_time); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.timestep); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Smooth omega %.3f", ctx.smooth_omega); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "Post SOR omega %.3f", ctx.post_sor_weight); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Simulation                      %.3f ms = %.3f GB/s = %.3f Bvox/s", time_simulation, bw_simulation, sim_speed); pos += dpos
     when !STRIP_MOST_QUERIES {
         draw_string(&ctx.font, 16, {10, pos},  font_color, " Advection                          %.3f ms = %.3f GB/s",                                                             process_finished_query("advection", 100)); pos += dpos
@@ -362,7 +363,7 @@ main :: proc() {
     else if vdb_file == "vdbs/eighth.bin"    do ctx.voxel_size = 0.5
     else if vdb_file == "vdbs/sixteenth.bin" do ctx.voxel_size = 1.0
     else                                     do ctx.voxel_size = 1.0
-    ctx.density_scale_base = 0.5
+    ctx.density_scale_base = 16
     data, ok := os.read_entire_file(vdb_file)
 
     ctx.header      = mem.slice_data_cast([]Binary_Header, data[                                                       :size_of(Binary_Header)                                 ])[0]
@@ -397,6 +398,7 @@ main :: proc() {
     gl.NamedBufferData(ctx.stats_buffer, 2*32*32*size_of(i32), nil, gl.STATIC_READ)
     
     ctx.sizes[.X1] = ro2([3]i32{i32(ctx.header.Nx), i32(ctx.header.Nz), i32(ctx.header.Ny)}, 32)
+    //ctx.sizes[.X1] = ro2([3]i32{128, 128, 128}, 32)
     ctx.sizes[.X2] = ctx.sizes[.X1] / 2
     ctx.sizes[.X4] = ctx.sizes[.X1] / 4
 
@@ -495,12 +497,14 @@ main :: proc() {
                 mul *= 2.0
             }
 
+            /*
             if .DOWN in input.keys[.UP] {
                 ctx.density_scale_base = min(16.0, ctx.density_scale_base* (1 + mul/100.0))
             }
             if .DOWN in input.keys[.DOWN] {
                 ctx.density_scale_base = ctx.density_scale_base / (1 + mul/100.0)
             }
+            */
 
             if .DOWN in input.buttons[0] {
                 ctx.phi = math.wrap(ctx.phi - 0.25*input.mouse_position_delta.x, 360.0)
@@ -529,11 +533,19 @@ main :: proc() {
             }
 
             if .PRESS in input.keys[.LEFT] {
-                ctx.smooth_omega = max(0.5, ctx.smooth_omega + mul/1000)
+                ctx.smooth_omega = max(0.5, ctx.smooth_omega - mul/1000)
             }
 
             if .PRESS in input.keys[.RIGHT] {
-                ctx.smooth_omega = max(0.5, ctx.smooth_omega - mul/1000)
+                ctx.smooth_omega = max(0.5, ctx.smooth_omega + mul/1000)
+            }
+
+            if .DOWN in input.keys[.UP] {
+                ctx.post_sor_weight = max(0.5, ctx.post_sor_weight + mul/1000)
+                
+            }
+            if .DOWN in input.keys[.DOWN] {
+                ctx.post_sor_weight = max(0.5, ctx.post_sor_weight - mul/1000)
             }
 
             if .PRESS in input.keys[.F7] {

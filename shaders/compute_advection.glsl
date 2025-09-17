@@ -195,8 +195,8 @@ void main() {
         ivec3 s = textureSize(u_smoke_texture, 0);
         int mins = min(s.x, min(s.y, s.z));
 
-        if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(mins/3, mins/3, mins/60+mins/3)))) {
-            if (all(lessThan(gid.xyz, s/2 + ivec3(mins/3, mins/3, mins/60-mins/3)))) {
+        if (all(greaterThanEqual(gid.xyz, s/2 - ivec3(mins/3, mins/3, mins/32+mins/3)))) {
+            if (all(lessThan(gid.xyz, s/2 + ivec3(mins/3, mins/3, mins/32-mins/3)))) {
                 smoke = 1.0;
             } 
         } 

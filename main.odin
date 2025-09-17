@@ -113,14 +113,18 @@ ctx: struct {
     num_cycles: int,
 
     post_sor_weight: f32,
+    smooth_omega: f32,
 
     pause: bool,
+    always_should_reset: bool,
     should_reset: bool,
     should_step: bool,
 
     header: Binary_Header,
 
     use_optimizations: bool,
+
+    stats: [2*32][32]i32,
 } = {
     pre_smooths0 = 2,
     pre_smooths1 = 2,
@@ -133,7 +137,8 @@ ctx: struct {
 
     smoke_weight = 1.0,
 
-    post_sor_weight = 1.8,
+    post_sor_weight = 1.5,
+    smooth_omega = 1.0,
 
     pause = true,
     should_reset = true,
@@ -211,6 +216,7 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Density Scale %.3f", ctx.density_scale_base); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Frame Time %.3f ms", 1000*delta_time); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.timestep); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "Smooth omega %.3f", ctx.smooth_omega); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Simulation                      %.3f ms = %.3f GB/s = %.3f Bvox/s", time_simulation, bw_simulation, sim_speed); pos += dpos
     when !STRIP_MOST_QUERIES {
         draw_string(&ctx.font, 16, {10, pos},  font_color, " Advection                          %.3f ms = %.3f GB/s",                                                             process_finished_query("advection", 100)); pos += dpos
@@ -231,18 +237,64 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Restrict        level 1->2     %.3f ms = %.3f GB/s",                                                             process_finished_query("restrict 2-4", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Zero            level 2        %.3f ms = %.3f GB/s",                                                             process_finished_query("zero 4", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     V-Cycle         level 2        %.3f ms = %.3f GB/s",                                                             process_finished_query("vcycle X4", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "      Sor %s     [4] level 2   % 4dx%.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ", 2*ctx.solves2,         process_finished_query("sor 4", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "      Sor %s     [4] level 2   % 4dx%.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ", ctx.solves2,           process_finished_query("sor 4", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Prolongate      level 2->1     %.3f ms = %.3f GB/s",                                                             process_finished_query("prolongate 4-2", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Post-Smooth [5] level 1   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths1,                                          process_finished_query("jacobi 1", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "    Prolongate       level 1->0     %.3f ms = %.3f GB/s",                                                             process_finished_query("prolongate 2-1", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "    Post-Smooth  [6] level 0   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths0,                                          process_finished_query("jacobi 1", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "   Sor           [7] level 0   % 4dx%.3f ms = %.3f GB/s", ctx.post_solves0,                                           process_finished_query("sor 1", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Gradient                          %.3f ms = %.3f GB/s",                                                                process_finished_query("gradient", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Gradient                          %.3f ms = %.3f GB/s",                                                             process_finished_query("gradient", 100)); pos += dpos
     }
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Lighting                            %.3f ms", time_lighting1+time_lighting2); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Render                              %.3f ms", time_render); pos += 2*dpos
 
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Active Queries: %d, Pool Size: %d", len(active_queries), len(query_pool)); pos += dpos
+
+
+        {
+            pos := f32(10)
+            dpos := f32(24)
+
+            widths: [32]i32 = 3
+            counts: [32]i32
+            max_j, max_i := 0, 0
+            for j in 0..<32 {
+                for i in 0..<32 {
+                    if ctx.stats[i][j] != 0 {
+                        max_i = max(max_i, i+1)
+                        max_j = max(max_j, j+1)
+                        counts[i] += ctx.stats[i][j]
+                        widths[i] = max(widths[i], i32(len(fmt.tprintf("%d", ctx.stats[i][j]))))
+                    }
+                }
+            }
+                s := fmt.tprintf("%s   ", "")
+                for i in 0..<max_i {
+                    if counts[i] == 0 do continue
+                    s = fmt.tprintf(fmt.tprintf("%%s%% %dd", widths[i]+1), s, i-24)
+                }
+                draw_string(&ctx.font, 16, {f32(ctx.main_window.width)-f32(len(s)*9+5), pos},  4, "%s", s); pos += dpos
+                sum2: [32]i32
+                for j in 0..<max_j {
+                    sum := i32(0)
+                    s := fmt.tprintf("%s% +3d", "", j-24)
+                    for i in 0..<max_i {
+                        if counts[i] == 0 do continue
+                        s = fmt.tprintf(fmt.tprintf("%%s%% %dd", widths[i]+1), s, min(999999, ctx.stats[i][j])); //1000000 * f32(stats[i]) / f32(sum))
+                        sum += ctx.stats[i][j]
+                        sum2[i] += ctx.stats[i][j]
+                    } 
+                    draw_string(&ctx.font, 16, {f32(ctx.main_window.width)-f32(len(s)*9+5), pos},  4, "%s", s); pos += dpos
+                }
+                /*
+                s = fmt.tprintf("%s   ", "")
+                for i in 0..<max_i {
+                    s = fmt.tprintf(fmt.tprintf("%%s%% %dd", widths+1), s, min(999999, sum2[i]))
+                }
+                fmt.printf("%q\n\n", s)
+                draw_string(&ctx.font, 16, {f32(ctx.main_window.width)-1000, pos},  font_color, "%s", s); pos += dpos
+                */
+        }
     }
 }
 
@@ -463,16 +515,25 @@ main :: proc() {
                 ctx.should_step = true
             }
 
+            if .PRESS in input.keys[.C] {
+                ctx.always_should_reset = !ctx.always_should_reset
+            }
+
+            if .PRESS in input.keys[.X] {
+                ctx.should_reset = true
+                ctx.should_step = true
+            }
+
             if .PRESS in input.keys[.SPACE] {
                 ctx.pause = !ctx.pause
             }
 
             if .PRESS in input.keys[.LEFT] {
-                ctx.num_cycles = max(0, ctx.num_cycles-int(mul))
+                ctx.smooth_omega = max(0.5, ctx.smooth_omega + mul/1000)
             }
 
             if .PRESS in input.keys[.RIGHT] {
-                ctx.num_cycles = ctx.num_cycles+int(mul)
+                ctx.smooth_omega = max(0.5, ctx.smooth_omega - mul/1000)
             }
 
             if .PRESS in input.keys[.F7] {
@@ -491,6 +552,11 @@ main :: proc() {
             if .PRESS in input.keys[.K] {
                 ctx.smoke_weight = ctx.smoke_weight + mul * 1.0
                 fmt.println("smoke weight: ", ctx.smoke_weight);
+            }
+
+            if ctx.always_should_reset {
+                ctx.should_reset = true
+                ctx.should_step = true
             }
 
             {

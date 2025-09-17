@@ -69,14 +69,13 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     gl.DispatchCompute(ro2(u32(size.x), 16)/16, ro2(u32(size.y), 8)/8, ro2(u32(size.z), 8)/8)
 
-    stats: [2*32][32]i32
-    gl.GetNamedBufferSubData(ctx.stats_buffer, 0, 2*32*32*size_of(i32), &stats[0])
+    gl.GetNamedBufferSubData(ctx.stats_buffer, 0, 2*32*32*size_of(i32), &ctx.stats[0])
 
 
     max_j, max_i := 0, 0
     for j in 0..<32 {
         for i in 0..<32 {
-            if stats[i][j] != 0 {
+            if ctx.stats[i][j] != 0 {
                 max_i = max(max_i, i+1)
                 max_j = max(max_j, j+1)
             }
@@ -86,7 +85,7 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
     max_k := 0
     for j in 0..<32 {
         for i in 0..<32 {
-            if stats[32+i][j] != 0 {
+            if ctx.stats[32+i][j] != 0 {
                 max_k = max(max_k, i+1)
             }
         }
@@ -104,7 +103,7 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
                 if i+j < 0 || i+j >= max_j {
                     s = fmt.tprintf("%s       \t", s)
                 } else {
-                    s = fmt.tprintf("%s% 7d\t", s, min(9999999, stats[i][i+j])); //1000000 * f32(stats[i]) / f32(sum))
+                    s = fmt.tprintf("%s% 7d\t", s, min(9999999, ctx.stats[i][i+j])); //1000000 * f32(ctx.stats[i]) / f32(sum))
                 }
             } 
         /*
@@ -126,14 +125,14 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
                 if i+j < 0 || i+j >= max_j {
                     s = fmt.tprintf("%s       \t", s)
                 } else {
-                    s = fmt.tprintf("%s% 7d\t", s, min(9999999, stats[i][i+j])); //1000000 * f32(stats[i]) / f32(sum))
+                    s = fmt.tprintf("%s% 7d\t", s, min(9999999, ctx.stats[i][i+j])); //1000000 * f32(ctx.stats[i]) / f32(sum))
                 }
             } 
             s = fmt.tprintf("%s\n", s)
         }
         fmt.println(s)
     }
-    {
+    if false {
         s := fmt.tprintf("%s    ", "")
         for i in 0..<max_i {
             s = fmt.tprintf("%s% +7d\t", s, i-24)
@@ -145,11 +144,11 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
             sum := i32(0)
             s = fmt.tprintf("%s% +3d\t", s, j-24)
             for i in 0..<max_i {
-                s = fmt.tprintf("%s% 7d\t", s, min(9999999, stats[i][j])); //1000000 * f32(stats[i]) / f32(sum))
-                sum += stats[i][j]
-                sum2[i] += stats[i][j]
+                s = fmt.tprintf("%s% 7d\t", s, min(9999999, ctx.stats[i][j])); //1000000 * f32(ctx.stats[i]) / f32(sum))
+                sum += ctx.stats[i][j]
+                sum2[i] += ctx.stats[i][j]
             } 
-            s = fmt.tprintf("%s% 7d\t", s, min(9999999, sum)); //1000000 * f32(stats[i]) / f32(sum))
+            s = fmt.tprintf("%s% 7d\t", s, min(9999999, sum)); //1000000 * f32(ctx.stats[i]) / f32(sum))
             s = fmt.tprintf("%s\n", s)
         }
         s = fmt.tprintf("%s    ", s)
@@ -160,7 +159,7 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
         fmt.println(s)
     }
 
-    {
+    if false {
         s := fmt.tprintf("%s    ", "")
         for i in 0..<max_k {
             s = fmt.tprintf("%s% +7d\t", s, i-24)
@@ -172,11 +171,11 @@ do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity
             sum := i32(0)
             s = fmt.tprintf("%s% +3d\t", s, j-24)
             for i in 0..<max_k {
-                s = fmt.tprintf("%s% 7d\t", s, min(9999999, stats[32+i][j])); //1000000 * f32(stats[i]) / f32(sum))
-                sum += stats[32+i][j]
-                sum2[i] += stats[32+i][j]
+                s = fmt.tprintf("%s% 7d\t", s, min(9999999, ctx.stats[32+i][j])); //1000000 * f32(ctx.stats[i]) / f32(sum))
+                sum += ctx.stats[32+i][j]
+                sum2[i] += ctx.stats[32+i][j]
             } 
-            s = fmt.tprintf("%s% 7d\t", s, min(9999999, sum)); //1000000 * f32(stats[i]) / f32(sum))
+            s = fmt.tprintf("%s% 7d\t", s, min(9999999, sum)); //1000000 * f32(ctx.stats[i]) / f32(sum))
             s = fmt.tprintf("%s\n", s)
         }
         s = fmt.tprintf("%s    ", s)
@@ -388,6 +387,13 @@ vcycle :: proc(current_level, max_level: Resolution) {
     
     block_query(fmt.tprintf("vcycle %v", current_level), ctx.timestep, int(mem_cycles[current_level])*int(ctx.num_voxels[.X1]), .Simulation)
 
+    next_level := Resolution(int(current_level)+1)
+    divergence_texture0    := &ctx.aux_textures[current_level][0]
+    pressure_ping_texture0 := &ctx.aux_textures[current_level][1]
+    pressure_pong_texture0 := &ctx.aux_textures[current_level][2]
+
+
+    do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, 6.0/7.0, ctx.sizes[current_level], 1)
     if current_level == max_level {
         divergence_texture    := &ctx.aux_textures[current_level][0]
         pressure_ping_texture := &ctx.aux_textures[current_level][1]
@@ -401,16 +407,11 @@ vcycle :: proc(current_level, max_level: Resolution) {
         return
     }
 
-    next_level := Resolution(int(current_level)+1)
-    divergence_texture0    := &ctx.aux_textures[current_level][0]
-    pressure_ping_texture0 := &ctx.aux_textures[current_level][1]
-    pressure_pong_texture0 := &ctx.aux_textures[current_level][2]
-
     divergence_texture1    := &ctx.aux_textures[next_level][0]
     pressure_ping_texture1 := &ctx.aux_textures[next_level][1]
     pressure_pong_texture1 := &ctx.aux_textures[next_level][2]
 
-    do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, 6.0/7.0, ctx.sizes[current_level], ctx.pre_smooths0 if current_level == .X1 else ctx.pre_smooths1)
+    do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.pre_smooths0 if current_level == .X1 else ctx.pre_smooths1)
 
     do_residual(pressure_ping_texture0^, pressure_pong_texture0^, divergence_texture0^, ctx.sizes[current_level])
     do_restrict(pressure_pong_texture0^, divergence_texture1^, ctx.sizes[current_level], ctx.sizes[next_level])
@@ -420,5 +421,6 @@ vcycle :: proc(current_level, max_level: Resolution) {
     
     do_prolongate(pressure_ping_texture1^, pressure_ping_texture0^, ctx.sizes[next_level], ctx.sizes[current_level])
     
-    do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, 6.0/7.0, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X2 else ctx.post_smooths1)
+    do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X1 else ctx.post_smooths1)
+    //do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, 6.0/7.0, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X2 else ctx.post_smooths1)
 }

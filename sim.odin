@@ -112,7 +112,7 @@ do_sim_step :: proc() {
                 do_zero_pressure(pressure_ping_texture^, ctx.sizes[.X1])
                 for i in 0..<ctx.num_cycles do vcycle(.X1, .X4)
                 //vcycle(.X1, .X4)
-                for i in 0..<ctx.post_solves0 do do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
+                do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
                 
                 //do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 8.0/9.0, ctx.sizes[.X1], ctx.post_solves0)
 

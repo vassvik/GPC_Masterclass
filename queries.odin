@@ -34,8 +34,8 @@ finished_render_queries: map[string][dynamic]Summed_Query_Sample
 
 
 init_query_pool :: proc() {
-    query_pool = make([dynamic]u32, 2000)
-    gl.CreateQueries(gl.TIMESTAMP, 2000, &query_pool[0])
+    query_pool = make([dynamic]u32, 10000)
+    gl.CreateQueries(gl.TIMESTAMP, 10000, &query_pool[0])
 }
 
 @(deferred_out=query_end)

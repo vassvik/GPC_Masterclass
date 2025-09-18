@@ -73,6 +73,7 @@ ctx: struct {
     envmap_buffer: u32,
     envmap_texture: u32,
     stats_buffer: u32,
+    debug_buffer: u32,
 
     voxel_size: f32,
     density_scale_base: f32,
@@ -227,12 +228,20 @@ draw :: proc() {
         gl.Uniform1ui(1, u32(ctx.slice_direction));
         gl.Uniform1f(2, ctx.slice_position);
         gl.Uniform1f(3, math.pow(f32(10.0), ctx.display_scale));
+        gl.Uniform2ui(4, u32(ctx.main_window.input.mouse_position.x), u32(ctx.main_window.height)-1-u32(ctx.main_window.input.mouse_position.y));
+        
+        gl.ClearNamedBufferSubData(ctx.debug_buffer, gl.R32I, 0, 32*size_of(f32), gl.RED, gl.FLOAT, nil)
+        gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, ctx.debug_buffer)
+
         gl.DrawArrays(gl.TRIANGLES, 0, 3);
 
         gl.BindSampler(1, 0)
         gl.BindSampler(2, 0)
         gl.BindSampler(3, 0)
     }
+
+    debug_data: [32]f32
+    gl.GetNamedBufferSubData(ctx.debug_buffer, 0, 32*size_of(f32), &debug_data[0])
 
     {
         GL_LABEL_BLOCK("Text");
@@ -265,6 +274,7 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.frame); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Smooth omega %.3f", ctx.smooth_omega); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Post SOR omega %.3f", ctx.post_sor_weight); pos += dpos
+        draw_string(&ctx.font, 32, {10, pos},  0, "Readback %.7f:", debug_data[:4]); pos += 2*dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Simulation                      %.3f ms = %.3f GB/s = %.3f Bvox/s", time_simulation, bw_simulation, sim_speed); pos += dpos
     when !STRIP_MOST_QUERIES {
         draw_string(&ctx.font, 16, {10, pos},  font_color, " Advection                          %.3f ms = %.3f GB/s",                                                             process_finished_query("advection", 100)); pos += dpos
@@ -443,6 +453,9 @@ main :: proc() {
 
     gl.CreateBuffers(1, &ctx.stats_buffer)
     gl.NamedBufferData(ctx.stats_buffer, 2*32*32*size_of(i32), nil, gl.STATIC_READ)
+    
+    gl.CreateBuffers(1, &ctx.debug_buffer)
+    gl.NamedBufferData(ctx.debug_buffer, 32*size_of(f32), nil, gl.STATIC_READ)
     
     ctx.sizes[.X1] = ro2([3]i32{i32(ctx.header.Nx), i32(ctx.header.Nz), i32(ctx.header.Ny)}, 32)
     //ctx.sizes[.X1] = ro2([3]i32{128, 128, 128}, 32)
@@ -623,8 +636,8 @@ main :: proc() {
                     fmt.println("ctx.slice_direction", ctx.slice_direction)
                 }
 
-                if .DOWN in input.keys[.O] {
-                    ctx.slice_position += f32(mul) / 100.0
+                if .PRESS in input.keys[.O] {
+                    ctx.slice_position += f32(mul) / 1000.0
                     if ctx.slice_position < 0.0 do ctx.slice_position += 1.0
                     if ctx.slice_position > 1.0 do ctx.slice_position -= 1.0
                     fmt.println("ctx.slice_position", ctx.slice_position)

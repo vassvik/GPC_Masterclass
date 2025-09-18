@@ -388,10 +388,10 @@ vcycle :: proc(current_level, max_level: Resolution) {
     block_query(fmt.tprintf("vcycle %v", current_level), ctx.timestep, int(mem_cycles[current_level])*int(ctx.num_voxels[.X1]), .Simulation)
 
     next_level := Resolution(int(current_level)+1)
+
     divergence_texture0    := &ctx.aux_textures[current_level][0]
     pressure_ping_texture0 := &ctx.aux_textures[current_level][1]
     pressure_pong_texture0 := &ctx.aux_textures[current_level][2]
-
 
     do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, 6.0/7.0, ctx.sizes[current_level], 1)
     if current_level == max_level {
@@ -422,6 +422,6 @@ vcycle :: proc(current_level, max_level: Resolution) {
     
     do_prolongate(pressure_ping_texture1^, pressure_ping_texture0^, ctx.sizes[next_level], ctx.sizes[current_level])
     
-    do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X1 else ctx.post_smooths1)
+    //do_sor(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X1 else ctx.post_smooths1)
     do_jacobi(pressure_ping_texture0, pressure_pong_texture0, divergence_texture0^, ctx.smooth_omega, ctx.sizes[current_level], ctx.post_smooths0 if current_level == .X1 else ctx.post_smooths1)
 }

@@ -176,16 +176,29 @@ float sample_texture_cubic(sampler3D s, vec3 uvw, bool always_clamp_lower) {
     }
 }
 
+vec3 trace(vec3 p) {
+#if 1
+    vec3 v0 = sample_velocity((p - 0.0    * u_dt) * u_inverse_size);
+    vec3 v1 = sample_velocity((p - 0.5*v0 * u_dt) * u_inverse_size);
+    vec3 v2 = sample_velocity((p - 0.5*v1 * u_dt) * u_inverse_size);
+    vec3 v3 = sample_velocity((p - 1.0*v2 * u_dt) * u_inverse_size);
+    vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+#elif 1
+    vec3 v0 = sample_velocity((p - 0.0    * u_dt) * u_inverse_size);
+    vec3 v1 = sample_velocity((p - 1.0*v0 * u_dt) * u_inverse_size);
+    vec3 v = (v0 + v1) / 2.0;
+#else
+    vec3 v = sample_velocity((p - 0.0    * u_dt) * u_inverse_size);
+#endif
+    return v;
+}
+
 void main() {
     ivec3 gid = ivec3(gl_GlobalInvocationID);
 
     {
         // smoke
-        vec3 v0 = sample_velocity((gid + 0.5 - 0.0    * u_dt) * u_inverse_size);
-        vec3 v1 = sample_velocity((gid + 0.5 - 0.5*v0 * u_dt) * u_inverse_size);
-        vec3 v2 = sample_velocity((gid + 0.5 - 0.5*v1 * u_dt) * u_inverse_size);
-        vec3 v3 = sample_velocity((gid + 0.5 - 1.0*v2 * u_dt) * u_inverse_size);
-        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        vec3 v = trace(gid + vec3(0.5, 0.5, 0.5));
         
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
 
@@ -211,14 +224,10 @@ void main() {
 
     {
         // velocity x
-        vec3 v0 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.0    * u_dt) * u_inverse_size);
-        vec3 v1 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.5*v0 * u_dt) * u_inverse_size);
-        vec3 v2 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 0.5*v1 * u_dt) * u_inverse_size);
-        vec3 v3 = sample_velocity((gid + vec3(1.0, 0.5, 0.5) - 1.0*v2 * u_dt) * u_inverse_size);
-        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
-        
+        vec3 v = trace(gid + vec3(1.0, 0.5, 0.5));
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
         float velocity_x = sample_texture(u_velocity_x_texture, uvw);
+        //float velocity_x = sample_texture_cubic(u_velocity_x_texture, uvw, true);
 
         
         if (gid.y == 0 || gid.z == 0) velocity_x = 0.0;
@@ -228,14 +237,11 @@ void main() {
 
     {
         // velocity y
-        vec3 v0 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 0.0    * u_dt) * u_inverse_size);
-        vec3 v1 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 0.5*v0 * u_dt) * u_inverse_size);
-        vec3 v2 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 0.5*v1 * u_dt) * u_inverse_size);
-        vec3 v3 = sample_velocity((gid + vec3(0.5, 1.0, 0.5) - 1.0*v2 * u_dt) * u_inverse_size);
-        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        vec3 v = trace(gid + vec3(0.5, 1.0, 0.5));
         
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
         float velocity_y = sample_texture(u_velocity_y_texture, uvw);
+        //float velocity_y = sample_texture_cubic(u_velocity_y_texture, uvw, true);
 
         if (gid.x == 0 || gid.z == 0) velocity_y = 0.0;
         
@@ -244,14 +250,11 @@ void main() {
 
     {
         // velocity z
-        vec3 v0 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 0.0    * u_dt) * u_inverse_size);
-        vec3 v1 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 0.5*v0 * u_dt) * u_inverse_size);
-        vec3 v2 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 0.5*v1 * u_dt) * u_inverse_size);
-        vec3 v3 = sample_velocity((gid + vec3(0.5, 0.5, 1.0) - 1.0*v2 * u_dt) * u_inverse_size);
-        vec3 v = (v0 + 2*v1 + 2*v2 + v3) / 6.0;
+        vec3 v = trace(gid + vec3(0.5, 0.5, 1.0));
         
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
         float velocity_z = sample_texture(u_velocity_z_texture, uvw);
+        //float velocity_z = sample_texture_cubic(u_velocity_z_texture, uvw, true);
 
         if (gid.x == 0 || gid.y == 0) velocity_z = 0.0;
         

@@ -116,8 +116,9 @@ ctx: struct {
     post_corrections0: int,
     num_cycles: int,
 
-    post_sor_weight: f32,
-    smooth_omega: f32,
+    solve_weight: f32,
+    post_weight: f32,
+    smooth_weight: f32,
 
     pause: bool,
     always_should_reset: bool,
@@ -150,8 +151,9 @@ ctx: struct {
 
     smoke_weight = 1,
 
-    post_sor_weight = 1.9,
-    smooth_omega = 6.0/7.0,
+    solve_weight = 1.8,
+    post_weight = 1.9,
+    smooth_weight = 6.0/7.0,
 
     pause = true,
     should_reset = true,
@@ -224,9 +226,13 @@ draw :: proc() {
         gl.BindTextureUnit(1, ctx.velocity_x_textures[.X1]);
         gl.BindTextureUnit(2, ctx.velocity_y_textures[.X1]);
         gl.BindTextureUnit(3, ctx.velocity_z_textures[.X1]);
+        gl.BindTextureUnit(4, ctx.rhs_textures[.X1]);
+        gl.BindTextureUnit(5, ctx.final_divergence_textures[.X1]);
         gl.BindSampler(1, nearest_sampler)
         gl.BindSampler(2, nearest_sampler)
         gl.BindSampler(3, nearest_sampler)
+        gl.BindSampler(4, nearest_sampler)
+        gl.BindSampler(5, nearest_sampler)
         gl.Uniform1ui(0, u32(ctx.display_mode));
         gl.Uniform1ui(1, u32(ctx.slice_direction));
         gl.Uniform1f(2, ctx.slice_position);
@@ -275,8 +281,8 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Frame Time %.3f ms", 1000*delta_time); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Frame %d", ctx.timestep); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Timestep %d", ctx.frame); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "Smooth omega %.3f", ctx.smooth_omega); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "Post SOR omega %.3f", ctx.post_sor_weight); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "Smooth omega %.4f", ctx.smooth_weight); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "Post SOR omega %.4f", ctx.post_weight); pos += dpos
         draw_string(&ctx.font, 32, {10, pos},  0, "Readback %.7f:", debug_data[:4]); pos += 2*dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "Simulation                      %.3f ms = %.3f GB/s = %.3f Bvox/s", time_simulation, bw_simulation, sim_speed); pos += dpos
     when !STRIP_MOST_QUERIES {
@@ -609,20 +615,27 @@ main :: proc() {
                 ctx.pause = !ctx.pause
             }
 
-            if .PRESS in input.keys[.LEFT] {
-                ctx.smooth_omega = max(0.5, ctx.smooth_omega - mul/1000)
-            }
+            {
+                mul := f32(-4.0)
+                if .DOWN in input.keys[.LEFT_CONTROL] || .DOWN in input.keys[.RIGHT_CONTROL] do mul += 1.0
+                if .DOWN in input.keys[.LEFT_SHIFT]   || .DOWN in input.keys[.RIGHT_SHIFT]   do mul += 1.0
+                if .DOWN in input.keys[.LEFT_ALT]     || .DOWN in input.keys[.RIGHT_ALT]     do mul += 1.0
 
-            if .PRESS in input.keys[.RIGHT] {
-                ctx.smooth_omega = max(0.5, ctx.smooth_omega + mul/1000)
-            }
+                if .PRESS in input.keys[.LEFT] {
+                    ctx.smooth_weight = max(0.5, ctx.smooth_weight - math.pow(f32(10.0), mul))
+                }
 
-            if .DOWN in input.keys[.UP] {
-                ctx.post_sor_weight = max(0.5, ctx.post_sor_weight + mul/1000)
-                
-            }
-            if .DOWN in input.keys[.DOWN] {
-                ctx.post_sor_weight = max(0.5, ctx.post_sor_weight - mul/1000)
+                if .PRESS in input.keys[.RIGHT] {
+                    ctx.smooth_weight = max(0.5, ctx.smooth_weight + math.pow(f32(10.0), mul))
+                }
+
+                if .DOWN in input.keys[.UP] {
+                    ctx.post_weight = max(0.5, ctx.post_weight + math.pow(f32(10.0), mul))
+                    
+                }
+                if .DOWN in input.keys[.DOWN] {
+                    ctx.post_weight = max(0.5, ctx.post_weight - math.pow(f32(10.0), mul))
+                }
             }
 
             if .PRESS in input.keys[.F7] {

@@ -107,8 +107,11 @@ do_sim_step :: proc() {
                 do_zero_pressure(ctx.pressure_ping_textures[.X1], ctx.sizes[.X1])
                 for i in 0..<ctx.num_cycles do vcycle(.X1, .X4)
                 //vcycle(.X1, .X4)
-                //do_sor(&ctx.pressure_ping_textures[.X1], &pressure_pong_texture, ctx.rhs_textures[.X1], ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
-                do_jacobi(&ctx.pressure_ping_textures[.X1], &ctx.pressure_pong_textures[.X1], ctx.rhs_textures[.X1], 6.0/7.0, ctx.sizes[.X1], ctx.post_solves0)
+                if ctx.post_weight >= 1.0 {
+                    do_sor(&ctx.pressure_ping_textures[.X1], &ctx.pressure_pong_textures[.X1], ctx.rhs_textures[.X1], ctx.post_weight, ctx.sizes[.X1], ctx.post_solves0)
+                } else {
+                    do_jacobi(&ctx.pressure_ping_textures[.X1], &ctx.pressure_pong_textures[.X1], ctx.rhs_textures[.X1], ctx.post_weight, ctx.sizes[.X1], ctx.post_solves0)
+                }
                 do_residual(ctx.pressure_ping_textures[.X1], ctx.pressure_pong_textures[.X1], ctx.rhs_textures[.X1], ctx.sizes[.X1])
             }
             do_gradient(ctx.pressure_ping_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1])

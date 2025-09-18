@@ -125,6 +125,15 @@ ctx: struct {
     use_optimizations: bool,
 
     stats: [2*32][32]i32,
+
+
+    display_mode: Display_Mode,
+
+    slice_direction: Slice_Direction,
+
+    slice_position: f32,
+    display_scale: f32,
+
 } = {
     pre_smooths0 = 2,
     pre_smooths1 = 2,
@@ -142,6 +151,25 @@ ctx: struct {
 
     pause = true,
     should_reset = true,
+
+    display_mode = .Render,
+    slice_direction = .X,
+    slice_position = 0.5,
+    display_scale = 0.0,
+
+}
+
+Display_Mode :: enum {
+    Render,
+    Initial_Divergence,
+    Final_Divergence,
+    Velocity,
+}
+
+Slice_Direction :: enum {
+    X,
+    Y,
+    Z
 }
 
 Window :: struct {
@@ -175,18 +203,36 @@ update_camera :: proc() {
     ctx.eye = eye
 }
 
+nearest_sampler: u32
+
+
 draw :: proc() {
     GL_LABEL_BLOCK("Draw");
     gl.BindFramebuffer(gl.FRAMEBUFFER, ctx.main_window.fbo)
 
     do_render() 
 
-    gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-    gl.Disable(gl.BLEND)
-    gl.UseProgram(ctx.raster_programs["blit"].handle);
-    gl.ActiveTexture(gl.TEXTURE0)
-    gl.BindTexture(gl.TEXTURE_2D, ctx.main_window.render_texture)
-    gl.DrawArrays(gl.TRIANGLES, 0, 3);
+    {
+        gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+        gl.Disable(gl.BLEND)
+        gl.UseProgram(ctx.raster_programs["blit"].handle);
+        gl.BindTextureUnit(0, ctx.main_window.render_texture);
+        gl.BindTextureUnit(1, ctx.velocity_x_textures[.X1]);
+        gl.BindTextureUnit(2, ctx.velocity_y_textures[.X1]);
+        gl.BindTextureUnit(3, ctx.velocity_z_textures[.X1]);
+        gl.BindSampler(1, nearest_sampler)
+        gl.BindSampler(2, nearest_sampler)
+        gl.BindSampler(3, nearest_sampler)
+        gl.Uniform1ui(0, u32(ctx.display_mode));
+        gl.Uniform1ui(1, u32(ctx.slice_direction));
+        gl.Uniform1f(2, ctx.slice_position);
+        gl.Uniform1f(3, math.pow(f32(10.0), ctx.display_scale));
+        gl.DrawArrays(gl.TRIANGLES, 0, 3);
+
+        gl.BindSampler(1, 0)
+        gl.BindSampler(2, 0)
+        gl.BindSampler(3, 0)
+    }
 
     {
         GL_LABEL_BLOCK("Text");
@@ -468,6 +514,10 @@ main :: proc() {
 
     // Main Loop
 
+    gl.CreateSamplers(1, &nearest_sampler)
+    gl.SamplerParameteri(nearest_sampler, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.SamplerParameteri(nearest_sampler, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
     gl.ClearColor(1.0, 1.0, 1.0, 1.0);
     for !glfw.WindowShouldClose(ctx.main_window.handle) {
         glfw.PollEvents();
@@ -553,8 +603,37 @@ main :: proc() {
                 print_finished_queries()
             }
 
-            if .PRESS in input.keys[.O] {
-                ctx.use_optimizations = !ctx.use_optimizations
+            {
+                mul := 1
+                if .DOWN in input.keys[.LEFT_ALT]     || .DOWN in input.keys[.RIGHT_ALT]     do mul *= -1
+                if .DOWN in input.keys[.LEFT_SHIFT]   || .DOWN in input.keys[.RIGHT_SHIFT]   do mul *= +2
+                if .DOWN in input.keys[.LEFT_CONTROL] || .DOWN in input.keys[.RIGHT_CONTROL] do mul *= +2
+
+                rotate_enum :: proc(e: $E, o: int) -> E {
+                    return E((int(e) + o + len(E)) % len(E))
+                }
+
+                if .PRESS in input.keys[.U] {
+                    ctx.display_mode = rotate_enum(ctx.display_mode, mul)
+                    fmt.println("ctx.display_mode", ctx.display_mode)
+                }
+
+                if .PRESS in input.keys[.I] {
+                    ctx.slice_direction = rotate_enum(ctx.slice_direction, mul)
+                    fmt.println("ctx.slice_direction", ctx.slice_direction)
+                }
+
+                if .DOWN in input.keys[.O] {
+                    ctx.slice_position += f32(mul) / 100.0
+                    if ctx.slice_position < 0.0 do ctx.slice_position += 1.0
+                    if ctx.slice_position > 1.0 do ctx.slice_position -= 1.0
+                    fmt.println("ctx.slice_position", ctx.slice_position)
+                }
+
+                if .PRESS in input.keys[.P] {
+                    ctx.display_scale = math.floor((ctx.display_scale + f32(mul) / 10.0) * 10 + 0.5) / 10.0
+                    fmt.println("ctx.display_scale", ctx.display_scale, math.pow(f32(10.0), ctx.display_scale))
+                }
             }
 
             if .PRESS in input.keys[.J] {

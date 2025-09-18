@@ -31,10 +31,10 @@ do_sim_step :: proc() {
         gl.BindTextureUnit(3, ctx.smoke_textures[.X1]);
         gl.BindTextureUnit(4, ctx.mask_texture);
         gl.BindTextureUnit(5, ctx.mask_texture4);
-        gl.BindImageTexture(0, ctx.aux_textures[.X1][0], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
-        gl.BindImageTexture(1, ctx.aux_textures[.X1][1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
-        gl.BindImageTexture(2, ctx.aux_textures[.X1][2], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
-        gl.BindImageTexture(3, ctx.aux_textures[.X1][3], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(0, ctx.pressure_ping_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(1, ctx.pressure_pong_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(2, ctx.rhs_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
+        gl.BindImageTexture(3, ctx.final_divergence_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R32F);
         
         program := ctx.compute_programs["advection"]
         gl.UseProgram(program.handle)
@@ -49,10 +49,10 @@ do_sim_step :: proc() {
         block_query("advection", ctx.timestep, mem_advection, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32((ctx.sizes[.X1] + program.local_size - 1) / program.local_size)))
 
-        swap(&ctx.velocity_x_textures[.X1],  &ctx.aux_textures[.X1][0])
-        swap(&ctx.velocity_y_textures[.X1],  &ctx.aux_textures[.X1][1])
-        swap(&ctx.velocity_z_textures[.X1],  &ctx.aux_textures[.X1][2])
-        swap(&ctx.smoke_textures[.X1],       &ctx.aux_textures[.X1][3])
+        swap(&ctx.velocity_x_textures[.X1],  &ctx.pressure_ping_textures[.X1])
+        swap(&ctx.velocity_y_textures[.X1],  &ctx.pressure_pong_textures[.X1])
+        swap(&ctx.velocity_z_textures[.X1],  &ctx.rhs_textures[.X1])
+        swap(&ctx.smoke_textures[.X1],       &ctx.final_divergence_textures[.X1])
     }
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     {
@@ -94,40 +94,29 @@ do_sim_step :: proc() {
     }
     for _ in 0..<1 {
         GL_LABEL_BLOCK("Projection");
-        divergence_texture    := &ctx.aux_textures[.X1][0]
-        pressure_ping_texture := &ctx.aux_textures[.X1][1]
-        pressure_pong_texture := &ctx.aux_textures[.X1][2]
-        divergence_texture2   := &ctx.aux_textures[.X1][3]
-        
         {
             block_query("projection", ctx.timestep, mem_projection, .Simulation)
             if ctx.use_optimizations {
-                do_divergence2(divergence_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
+                do_divergence2(ctx.rhs_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
             } else {
-                do_divergence(divergence_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
+                do_divergence(ctx.rhs_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
             }
             {
                 block_query("poisson", ctx.timestep, int(mem_poisson)*int(ctx.num_voxels[.X1]), .Simulation)
                 gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
-                do_zero_pressure(pressure_ping_texture^, ctx.sizes[.X1])
+                do_zero_pressure(ctx.pressure_ping_textures[.X1], ctx.sizes[.X1])
                 for i in 0..<ctx.num_cycles do vcycle(.X1, .X4)
                 //vcycle(.X1, .X4)
-                //do_sor(pressure_ping_texture, pressure_pong_texture, divergence_texture^, ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
-                do_jacobi(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 6.0/7.0, ctx.sizes[.X1], ctx.post_solves0)
-                do_residual(pressure_ping_texture^, pressure_pong_texture^, divergence_texture^, ctx.sizes[.X1])
-                            
-                //if ctx.use_optimizations {
-                //    do_jacobi_vertex3(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
-                //} else {
-                //    do_jacobi_vertex(pressure_ping_texture, pressure_pong_texture, divergence_texture^, 0.5, ctx.sizes[.X1], ctx.post_corrections0)
-                //}
+                //do_sor(&ctx.pressure_ping_textures[.X1], &pressure_pong_texture, ctx.rhs_textures[.X1], ctx.post_sor_weight, ctx.sizes[.X1], ctx.post_solves0)
+                do_jacobi(&ctx.pressure_ping_textures[.X1], &ctx.pressure_pong_textures[.X1], ctx.rhs_textures[.X1], 6.0/7.0, ctx.sizes[.X1], ctx.post_solves0)
+                do_residual(ctx.pressure_ping_textures[.X1], ctx.pressure_pong_textures[.X1], ctx.rhs_textures[.X1], ctx.sizes[.X1])
             }
-            do_gradient(pressure_ping_texture^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1])
+            do_gradient(ctx.pressure_ping_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1])
         }
 
         if true || ctx.should_step {
-            do_divergence(divergence_texture2^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], true)
-            do_compare_divergence(divergence_texture^, divergence_texture2^, ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], pressure_pong_texture^, ctx.sizes[.X1])
+            do_divergence(ctx.final_divergence_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], true)
+            do_compare_divergence(ctx.rhs_textures[.X1], ctx.final_divergence_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.pressure_pong_textures[.X1], ctx.sizes[.X1])
         }
     }
     

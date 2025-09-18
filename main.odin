@@ -89,11 +89,14 @@ ctx: struct {
     sizes: [Resolution][3]i32,
     num_voxels: [Resolution]i32,
 
-    velocity_x_textures:  [Resolution]u32,
-    velocity_y_textures:  [Resolution]u32,
-    velocity_z_textures:  [Resolution]u32,
-    smoke_textures:       [Resolution]u32,
-    aux_textures:         [Resolution][4]u32,
+    velocity_x_textures:       [Resolution]u32,
+    velocity_y_textures:       [Resolution]u32,
+    velocity_z_textures:       [Resolution]u32,
+    smoke_textures:            [Resolution]u32,
+    pressure_ping_textures:    [Resolution]u32,
+    pressure_pong_textures:    [Resolution]u32,
+    rhs_textures:              [Resolution]u32,
+    final_divergence_textures: [Resolution]u32,
 
 
     font: Font,
@@ -479,11 +482,21 @@ main :: proc() {
     ctx.velocity_z_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
     ctx.smoke_textures[.X1]       = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
     
-    for i in 0..<4 {
-        ctx.aux_textures[.X1][i] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-        ctx.aux_textures[.X2][i] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-        ctx.aux_textures[.X4][i] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    }
+    ctx.pressure_ping_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_pong_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.rhs_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.final_divergence_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+
+    ctx.pressure_ping_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_pong_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.rhs_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.final_divergence_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+
+    ctx.pressure_ping_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_pong_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.rhs_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.final_divergence_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+
 
     sum := uint(0)
     sum += 1*2*uint(ctx.num_voxels[.X1])*9/8

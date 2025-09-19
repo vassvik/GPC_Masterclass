@@ -210,7 +210,7 @@ vec3 trace(vec3 p) {
 #else
     vec3 v = sample_velocity((p - 0.0    * u_dt) * u_inverse_size);
 #endif
-    v += (pcg4d(uvec4(gl_GlobalInvocationID, u_time))*2.0 - 1.0).xyz * 0.01;
+    v += (pcg4d(uvec4(gl_GlobalInvocationID, u_time))*2.0 - 1.0).xyz * 0.00;
     return v;
 }
 

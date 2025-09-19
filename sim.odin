@@ -93,6 +93,24 @@ do_sim_step :: proc() {
         block_query("compute mask", ctx.frame, int(2*ctx.num_voxels[.X1] + 1*ctx.num_voxels[.X1]/(8*8*8)), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }
+    if true {
+        gl.UseProgram(ctx.compute_programs["hourglass"].handle)
+        gl.BindTextureUnit(0, ctx.velocity_x_textures[.X1]);
+        gl.BindTextureUnit(1, ctx.velocity_y_textures[.X1]);
+        gl.BindTextureUnit(2, ctx.velocity_z_textures[.X1]);
+        gl.BindImageTexture(0, ctx.pressure_ping_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
+        gl.BindImageTexture(1, ctx.pressure_pong_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
+        gl.BindImageTexture(2, ctx.rhs_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
+
+        gl.Uniform3i(0, expand_values(ctx.sizes[.X1]));
+        gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
+
+        gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]) / {8, 8, 8}))
+
+        swap(&ctx.velocity_x_textures[.X1],  &ctx.pressure_ping_textures[.X1])
+        swap(&ctx.velocity_y_textures[.X1],  &ctx.pressure_pong_textures[.X1])
+        swap(&ctx.velocity_z_textures[.X1],  &ctx.rhs_textures[.X1])
+    }
     for _ in 0..<1 {
         GL_LABEL_BLOCK("Projection");
         {

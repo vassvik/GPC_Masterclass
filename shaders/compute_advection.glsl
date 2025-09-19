@@ -231,8 +231,8 @@ void main() {
         // velocity x
         vec3 v = trace(gid + vec3(1.0, 0.5, 0.5));
         vec3 uvw = (gid + vec3(0.5, 0.5, 0.5) - v * u_dt) * u_inverse_size;
-        float velocity_x = sample_texture(u_velocity_x_texture, uvw);
-        //float velocity_x = sample_texture_cubic(u_velocity_x_texture, uvw, false);
+        //float velocity_x = sample_texture(u_velocity_x_texture, uvw);
+        float velocity_x = sample_texture_cubic(u_velocity_x_texture, uvw, false);
 
         
         if (gid.y == 0 || gid.z == 0) velocity_x = 0.0;
@@ -244,8 +244,8 @@ void main() {
         // velocity y
         vec3 v = trace(gid + vec3(0.5, 1.0, 0.5));
         vec3 uvw = (gid + vec3(0.5, 0.5, 0.5) - v * u_dt) * u_inverse_size;
-        float velocity_y = sample_texture(u_velocity_y_texture, uvw);
-        //float velocity_y = sample_texture_cubic(u_velocity_y_texture, uvw, false);
+        //float velocity_y = sample_texture(u_velocity_y_texture, uvw);
+        float velocity_y = sample_texture_cubic(u_velocity_y_texture, uvw, false);
 
         if (gid.x == 0 || gid.z == 0) velocity_y = 0.0;
         
@@ -256,8 +256,8 @@ void main() {
         // velocity z
         vec3 v = trace(gid + vec3(0.5, 0.5, 1.0));
         vec3 uvw = (gid + vec3(0.5, 0.5, 0.5) - v * u_dt) * u_inverse_size;
-        float velocity_z = sample_texture(u_velocity_z_texture, uvw);
-        //float velocity_z = sample_texture_cubic(u_velocity_z_texture, uvw, false);
+        //float velocity_z = sample_texture(u_velocity_z_texture, uvw);
+        float velocity_z = sample_texture_cubic(u_velocity_z_texture, uvw, false);
 
         if (gid.x == 0 || gid.y == 0) velocity_z = 0.0;
         

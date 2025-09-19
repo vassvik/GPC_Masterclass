@@ -48,17 +48,22 @@ float sample_texture_cubic(sampler3D s, vec3 uvw, bool always_clamp_lower) {
     vec3 t = fract(p - 0.5);
 
     // interpolate
-#if 1
+#if 0
     // 0th and 2nd order continuous
     vec3 wm = -1.0/6.0 * (t - 2) * (t - 1) * t          ;
     vec3 w0 = +1.0/2.0 * (t - 2) * (t - 1) *     (t + 1);
     vec3 w1 = -1.0/2.0 * (t - 2) *           t * (t + 1);
     vec3 w2 = +1.0/6.0 *           (t - 1) * t * (t + 1);
-#else
+#elif 0
     vec3 wm = -1.0/2.0*t*(t-1)*(t-1);
     vec3 w0 = +1.0/2.0*(t-1)*(3*t*t - 2*t - 2);
     vec3 w1 = -1.0/2.0*t*(3*t*t - 4*t - 1);
     vec3 w2 = +1.0/2.0*t*t*(t-1);
+#else
+    vec3 wm = vec3(0.0);
+    vec3 w0 = 1-t;
+    vec3 w1 = t;
+    vec3 w2 = vec3(0.0);
 #endif
     float qmmm = fetch_texture(s, start + ivec3(-1, -1, -1));
     float q0mm = fetch_texture(s, start + ivec3(+0, -1, -1));
@@ -202,8 +207,8 @@ void main() {
         
         vec3 uvw = (gid + 0.5 - v * u_dt) * u_inverse_size;
 
-        //float smoke = sample_texture_cubic(u_smoke_texture, uvw + 0.0 * u_inverse_size, true);
-        float smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
+        float smoke = sample_texture_cubic(u_smoke_texture, uvw + 0.0 * u_inverse_size, true);
+        //float smoke = sample_texture(u_smoke_texture, uvw + 0.0 * u_inverse_size);
         
         ivec3 s = textureSize(u_smoke_texture, 0);
         int mins = min(s.x, min(s.y, s.z));

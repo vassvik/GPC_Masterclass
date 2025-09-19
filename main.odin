@@ -20,7 +20,7 @@ NvOptimusEnablement: u32 = 0x00000001;
 @(export, link_name="AmdPowerXpressRequestHighPerformance")
 AmdPowerXpressRequestHighPerformance: i32 = 1;
 
-
+TEXTURE_PRECISION :: gl.R16F
 Resolution :: enum {
     X1  = 0,
     X2  = 1,
@@ -483,25 +483,25 @@ main :: proc() {
     ctx.mask_texture4           = make_texture3D(expand_values(ctx.sizes[.X1]/4),           gl.R8,      gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     fmt.println("done")
 
-    ctx.velocity_x_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.velocity_y_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.velocity_z_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.smoke_textures[.X1]       = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.velocity_x_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.velocity_y_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.velocity_z_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.smoke_textures[.X1]       = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
     
-    ctx.pressure_ping_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.pressure_pong_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.rhs_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.final_divergence_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_ping_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_pong_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.rhs_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.final_divergence_textures[.X1] = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
 
-    ctx.pressure_ping_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.pressure_pong_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.rhs_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.final_divergence_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_ping_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_pong_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.rhs_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.final_divergence_textures[.X2] = make_texture3D(expand_values(ctx.sizes[.X2]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
 
-    ctx.pressure_ping_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.pressure_pong_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.rhs_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
-    ctx.final_divergence_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), gl.R32F, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_ping_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.pressure_pong_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.rhs_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
+    ctx.final_divergence_textures[.X4] = make_texture3D(expand_values(ctx.sizes[.X4]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
 
 
     sum := uint(0)

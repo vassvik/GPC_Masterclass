@@ -45,6 +45,7 @@ do_sim_step :: proc() {
         gl.Uniform1f(2, dt);
         gl.Uniform1f(3, ctx.voxel_size);
         gl.Uniform1f(4, ctx.smoke_weight * (dt/60.0) / ctx.voxel_size);
+        gl.Uniform1ui(5, u32(ctx.frame));
 
         block_query("advection", ctx.timestep, mem_advection, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32((ctx.sizes[.X1] + program.local_size - 1) / program.local_size)))
@@ -92,7 +93,7 @@ do_sim_step :: proc() {
         block_query("compute mask", ctx.frame, int(2*ctx.num_voxels[.X1] + 1*ctx.num_voxels[.X1]/(8*8*8)), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }
-    for _ in 0..<3 {
+    for _ in 0..<1 {
         GL_LABEL_BLOCK("Projection");
         {
             block_query("projection", ctx.timestep, mem_projection, .Simulation)

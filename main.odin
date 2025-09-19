@@ -20,7 +20,7 @@ NvOptimusEnablement: u32 = 0x00000001;
 @(export, link_name="AmdPowerXpressRequestHighPerformance")
 AmdPowerXpressRequestHighPerformance: i32 = 1;
 
-TEXTURE_PRECISION :: gl.R16F
+TEXTURE_PRECISION :: gl.R32F
 Resolution :: enum {
     X1  = 0,
     X2  = 1,

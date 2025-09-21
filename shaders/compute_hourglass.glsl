@@ -66,7 +66,7 @@ void main() {
     vec3 corners = v000 + v200 + v210 + v220 + v002 + v202 + v022 + v222;
 
     vec3 w = (v111 * 16 - 4.0 * faces + corners) / 32;
-    vec3 v = v111 - 1*w;
+    vec3 v = v111 - 0*w;
 
     if (gid.y == 0 || gid.z == 0) {
         v.x = 0.0;

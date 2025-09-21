@@ -27,48 +27,15 @@ Resolution :: enum {
     X4  = 2,
 }
 
-
-Binary_Format :: enum u16 {
-    f32,
-    f16,
-
-    u24,
-    u16,
-    u8,
-
-    s24,
-    s16,
-    s8,
-}
-
-Binary_Header :: struct {
-    Nx: u16,
-    Ny: u16,
-    Nz: u16,
-    format: Binary_Format,
-
-    is_sparse:  b16,
-    block_size: u16,
-    num_tiles:  u32,
-
-    normalization:    f32,
-    offsets:       [3]i32,
-}
-
-
 ctx: struct {
     vao: u32,
 
     raster_programs:  map[string]Raster_Program,
     compute_programs: map[string]Compute_Program,
 
-    bufs: [2]u32,
     reduced_smoke_texture1: u32,
     lighting_texture1: u32,
     attenuation_texture1: u32,
-    
-    mask_texture: u32,
-    mask_texture4: u32,
     
     envmap_buffer: u32,
     envmap_texture: u32,
@@ -125,12 +92,7 @@ ctx: struct {
     should_reset: bool,
     should_step: bool,
 
-    header: Binary_Header,
-
-    use_optimizations: bool,
-
     stats: [2*32][32]i32,
-
 
     display_mode: Display_Mode,
 
@@ -290,7 +252,7 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, " Reduce data                        %.3f ms = %.3f GB/s",                                                             process_finished_query("reduce data", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, " Compute mask                       %.3f ms = %.3f GB/s",                                                             process_finished_query("compute mask", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, " Projection                         %.3f ms = %.3f GB/s",                                                             process_finished_query("projection", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Divergence %s                     %.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ",                        process_finished_query("divergence", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "  Divergence                        %.3f ms = %.3f GB/s",                                                             process_finished_query("divergence", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "  Poisson                           %.3f ms = %.3f GB/s",                                                             process_finished_query("poisson", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "   Zero              level 0        %.3f ms = %.3f GB/s",                                                             process_finished_query("zero 1", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "   V-Cycle       [1] level 0   % 4dx%.3f ms = %.3f GB/s", ctx.num_cycles,                                             process_finished_query("vcycle X1", 100)); pos += dpos
@@ -304,7 +266,7 @@ draw :: proc() {
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Restrict        level 1->2     %.3f ms = %.3f GB/s",                                                             process_finished_query("restrict 2-4", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Zero            level 2        %.3f ms = %.3f GB/s",                                                             process_finished_query("zero 4", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     V-Cycle         level 2        %.3f ms = %.3f GB/s",                                                             process_finished_query("vcycle X4", 100)); pos += dpos
-        draw_string(&ctx.font, 16, {10, pos},  font_color, "      Sor %s     [4] level 2   % 4dx%.3f ms = %.3f GB/s", ctx.use_optimizations ? "**" : "  ", ctx.solves2,           process_finished_query("sor 4", 100)); pos += dpos
+        draw_string(&ctx.font, 16, {10, pos},  font_color, "      Sor        [4] level 2   % 4dx%.3f ms = %.3f GB/s", ctx.solves2,                                                process_finished_query("sor 4", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Prolongate      level 2->1     %.3f ms = %.3f GB/s",                                                             process_finished_query("prolongate 4-2", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "     Post-Smooth [5] level 1   % 4dx%.3f ms = %.3f GB/s", ctx.post_smooths1,                                          process_finished_query("jacobi 1", 100)); pos += dpos
         draw_string(&ctx.font, 16, {10, pos},  font_color, "    Prolongate       level 1->0     %.3f ms = %.3f GB/s",                                                             process_finished_query("prolongate 2-1", 100)); pos += dpos
@@ -423,19 +385,8 @@ main :: proc() {
 
     gl.Enable(gl.FRAMEBUFFER_SRGB)
 
-    fmt.printf("Loading file ... ");
-    vdb_file := "vdbs/quarter.bin"
-         if vdb_file == "vdbs/quarter.bin"   do ctx.voxel_size = 0.25
-    else if vdb_file == "vdbs/eighth.bin"    do ctx.voxel_size = 0.5
-    else if vdb_file == "vdbs/sixteenth.bin" do ctx.voxel_size = 1.0
-    else                                     do ctx.voxel_size = 1.0
+    ctx.voxel_size = 0.25
     ctx.density_scale_base = 16
-    data, ok := os.read_entire_file(vdb_file)
-
-    ctx.header      = mem.slice_data_cast([]Binary_Header, data[                                                       :size_of(Binary_Header)                                 ])[0]
-    coordinates    := mem.slice_data_cast([][3]i32,        data[size_of(Binary_Header)                                 :size_of(Binary_Header)+ctx.header.num_tiles*size_of([3]i32)])
-    leaf_node_data := mem.slice_data_cast([]f16,           data[size_of(Binary_Header)+ctx.header.num_tiles*size_of([3]i32):                                                       ])
-    fmt.println("done")
 
     {
         data, tex := load_and_process_hdri()
@@ -454,20 +405,13 @@ main :: proc() {
         gl.NamedBufferData(ctx.envmap_buffer, size_of(data), &data[0], gl.STATIC_READ)
     }
 
-    gl.CreateBuffers(2, &ctx.bufs[0])
-    gl.NamedBufferData(ctx.bufs[0], size_of([3]i32)*len(coordinates), &coordinates[0], gl.STATIC_READ)
-    gl.NamedBufferData(ctx.bufs[1], size_of(f16)*len(leaf_node_data[:]), &leaf_node_data[0], gl.STATIC_READ)
-
-    
-
     gl.CreateBuffers(1, &ctx.stats_buffer)
     gl.NamedBufferData(ctx.stats_buffer, 2*32*32*size_of(i32), nil, gl.STATIC_READ)
     
     gl.CreateBuffers(1, &ctx.debug_buffer)
     gl.NamedBufferData(ctx.debug_buffer, 32*size_of(f32), nil, gl.STATIC_READ)
     
-    ctx.sizes[.X1] = ro2([3]i32{i32(ctx.header.Nx), i32(ctx.header.Nz), i32(ctx.header.Ny)}, 32)
-    //ctx.sizes[.X1] = ro2([3]i32{128, 128, 128}, 32)
+    ctx.sizes[.X1] = ro2([3]i32{512, 640, 352}, 32)
     ctx.sizes[.X2] = ctx.sizes[.X1] / 2
     ctx.sizes[.X4] = ctx.sizes[.X1] / 4
 
@@ -479,8 +423,6 @@ main :: proc() {
     ctx.reduced_smoke_texture1 = make_texture3D(expand_values(ctx.sizes[.X2]),             gl.R16F,    gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     ctx.lighting_texture1      = make_texture3D(expand_values(ctx.sizes[.X2]),             gl.RGBA16F, gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     ctx.attenuation_texture1   = make_texture3D(expand_values(ctx.sizes[.X2] * {3, 3, 3}), gl.R16F,    gl.RED,         gl.FLOAT, nil, gl.LINEAR)
-    ctx.mask_texture           = make_texture3D(expand_values(ctx.sizes[.X1]/8),           gl.R8,      gl.RED,         gl.FLOAT, nil, gl.LINEAR)
-    ctx.mask_texture4           = make_texture3D(expand_values(ctx.sizes[.X1]/4),           gl.R8,      gl.RED,         gl.FLOAT, nil, gl.LINEAR)
     fmt.println("done")
 
     ctx.velocity_x_textures[.X1]  = make_texture3D(expand_values(ctx.sizes[.X1]), TEXTURE_PRECISION, gl.RED, gl.FLOAT, nil, gl.LINEAR)
@@ -509,8 +451,6 @@ main :: proc() {
     sum += 3*2*uint(ctx.num_voxels[.X1])*1/1
     sum += 4*2*uint(ctx.num_voxels[.X1])*73/64
     sum += 8*uint(ctx.num_voxels[.X2]) + 2*uint(ctx.num_voxels[.X2])*27
-    sum += 1*uint(ctx.num_voxels[.X1])/8
-    sum += uint(ctx.header.num_tiles*(2*8*8*8 + 12))
     sum += 16*uint(ctx.main_window.width * ctx.main_window.height)
     sum += 16*uint(ctx.main_window.width * ctx.main_window.height)
     fmt.println("VRAM consumption:")
@@ -518,8 +458,6 @@ main :: proc() {
     fmt.println("   Velocity:   ", fmt_large_bytes(3*2*uint(ctx.num_voxels[.X1])*1/1))
     fmt.println("   Auxiliary:  ", fmt_large_bytes(4*2*uint(ctx.num_voxels[.X1])*73/64))
     fmt.println("   Lighting:   ", fmt_large_bytes(8*uint(ctx.num_voxels[.X2]) + 2*uint(ctx.num_voxels[.X2])*27))
-    fmt.println("   Mask:       ", fmt_large_bytes(1*uint(ctx.num_voxels[.X1])/8))
-    fmt.println("   VDB Data:   ", fmt_large_bytes(uint(ctx.header.num_tiles*(2*8*8*8 + 12))))
     fmt.println("   Framebuffer:", fmt_large_bytes(16*uint(ctx.main_window.width * ctx.main_window.height)))
     fmt.println("   Total:      ", fmt_large_bytes(sum))
 

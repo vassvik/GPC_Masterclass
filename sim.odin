@@ -29,8 +29,6 @@ do_sim_step :: proc() {
         gl.BindTextureUnit(1, ctx.velocity_y_textures[.X1]);
         gl.BindTextureUnit(2, ctx.velocity_z_textures[.X1]);
         gl.BindTextureUnit(3, ctx.smoke_textures[.X1]);
-        gl.BindTextureUnit(4, ctx.mask_texture);
-        gl.BindTextureUnit(5, ctx.mask_texture4);
         gl.BindImageTexture(0, ctx.pressure_ping_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
         gl.BindImageTexture(1, ctx.pressure_pong_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
         gl.BindImageTexture(2, ctx.rhs_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
@@ -82,17 +80,7 @@ do_sim_step :: proc() {
         block_query("reduce data", ctx.frame, int(2*ctx.num_voxels[.X1] + 2*ctx.num_voxels[.X2]), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X2]/4)))
     }
-    {
-        GL_LABEL_BLOCK("Computing Mask");
-        gl.UseProgram(ctx.compute_programs["mask"].handle)
 
-        gl.BindTextureUnit(0, ctx.smoke_textures[.X1]);
-        gl.BindImageTexture(0, ctx.mask_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
-        gl.BindImageTexture(1, ctx.mask_texture4, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
-
-        block_query("compute mask", ctx.frame, int(2*ctx.num_voxels[.X1] + 1*ctx.num_voxels[.X1]/(8*8*8)), .Render)
-        gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
-    }
     if true {
         gl.UseProgram(ctx.compute_programs["hourglass"].handle)
         gl.BindTextureUnit(0, ctx.velocity_x_textures[.X1]);
@@ -115,11 +103,7 @@ do_sim_step :: proc() {
         GL_LABEL_BLOCK("Projection");
         {
             block_query("projection", ctx.timestep, mem_projection, .Simulation)
-            if ctx.use_optimizations {
-                do_divergence2(ctx.rhs_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
-            } else {
-                do_divergence(ctx.rhs_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
-            }
+            do_divergence(ctx.rhs_textures[.X1], ctx.velocity_x_textures[.X1], ctx.velocity_y_textures[.X1], ctx.velocity_z_textures[.X1], ctx.sizes[.X1], false)
             {
                 block_query("poisson", ctx.timestep, int(mem_poisson)*int(ctx.num_voxels[.X1]), .Simulation)
                 gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
@@ -165,18 +149,6 @@ do_sim_reset :: proc() {
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1] / 8)))
     }
 
-    gl.MemoryBarrier(gl.SHADER_IMAGE_ACCESS_BARRIER_BIT)
-    if false {
-        GL_LABEL_BLOCK("Copy Leaf Data");
-        gl.UseProgram(ctx.compute_programs["copy_leaves"].handle)
-
-        gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, ctx.bufs[0])
-        gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, ctx.bufs[1])
-
-        gl.BindImageTexture(0, ctx.smoke_textures[.X1], 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
-
-        gl.DispatchCompute(ctx.header.num_tiles, 1, 1)
-    }
     gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
     {
         GL_LABEL_BLOCK("Reducing Data");
@@ -187,16 +159,6 @@ do_sim_reset :: proc() {
 
         block_query("reduce data", ctx.frame, int(2*ctx.num_voxels[.X1] + 2*ctx.num_voxels[.X2]), .Render)
         gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X2]/4)))
-    }
-    {
-        GL_LABEL_BLOCK("Computing Mask");
-        gl.UseProgram(ctx.compute_programs["mask"].handle)
-
-        gl.BindTextureUnit(0, ctx.smoke_textures[.X1]);
-        gl.BindImageTexture(0, ctx.mask_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
-        gl.BindImageTexture(1, ctx.mask_texture4, 0, gl.TRUE, 0, gl.WRITE_ONLY, gl.R8);
-
-        gl.DispatchCompute(expand_values(linalg.to_u32(ctx.sizes[.X1]/8)))
     }
     ctx.frame = 0
 }

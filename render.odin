@@ -112,9 +112,8 @@ do_render:: proc() {
         gl.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         gl.BlendEquation(gl.FUNC_ADD);
 
-        gl.BindTextureUnit(0, ctx.mask_texture)
-        gl.BindTextureUnit(1, ctx.lighting_texture1)
-        gl.BindTextureUnit(2, ctx.smoke_textures[.X1])
+        gl.BindTextureUnit(0, ctx.lighting_texture1)
+        gl.BindTextureUnit(1, ctx.smoke_textures[.X1])
         
         gl.UseProgram(ctx.raster_programs["voxels"].handle)
         

@@ -1,7 +1,5 @@
 #version 430 core
 
-layout(binding = 0) uniform sampler3D mask_texture;
-
 layout(location = 0)  uniform mat4x4 u_PVM;
 layout(location = 1)  uniform ivec3  u_size;
 layout(location = 2)  uniform uint   u_slice_axis;
@@ -74,11 +72,6 @@ void main() {
 
     uint idx = gl_InstanceID;
     uvec3 tile_position = tile_index_to_tile_position(idx);
-
-    float m = texelFetch(mask_texture, ivec3(tile_position), 0).x;
-    if (m == 0.0) {
-        tile_position = uvec3(1e9);
-    }
 
     //if (8*tile_position.x > u_size.x/2) tile_position = uvec3(1e9);
 

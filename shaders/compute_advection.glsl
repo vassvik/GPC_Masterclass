@@ -13,14 +13,11 @@ layout(binding = 0) uniform sampler3D u_velocity_x_texture;
 layout(binding = 1) uniform sampler3D u_velocity_y_texture;
 layout(binding = 2) uniform sampler3D u_velocity_z_texture;
 layout(binding = 3) uniform sampler3D u_smoke_texture;
-layout(binding = 4) uniform sampler3D u_mask_texture8;
-layout(binding = 5) uniform sampler3D u_mask_texture4;
 
 layout(binding = 0) writeonly uniform image3D u_velocity_x_image;
 layout(binding = 1) writeonly uniform image3D u_velocity_y_image;
 layout(binding = 2) writeonly uniform image3D u_velocity_z_image;
 layout(binding = 3) writeonly uniform image3D u_smoke_image;
-layout(binding = 4) writeonly uniform image3D u_temperature_image;
 
 
 vec3 sample_velocity(vec3 uvw) {

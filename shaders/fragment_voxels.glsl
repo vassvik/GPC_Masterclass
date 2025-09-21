@@ -1,7 +1,7 @@
 #version 430 core
 
-layout(binding = 1) uniform sampler3D lighting_texture;
-layout(binding = 2) uniform sampler3D density_texture;
+layout(binding = 0) uniform sampler3D lighting_texture;
+layout(binding = 1) uniform sampler3D density_texture;
 
 layout(location = 1) uniform ivec3 u_size;
 

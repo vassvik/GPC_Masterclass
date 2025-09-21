@@ -33,25 +33,6 @@ do_divergence :: proc(divergence_texture, velocity_x_texture, velocity_y_texture
     }
 }
 
-do_divergence2 :: proc(divergence_texture, velocity_x_texture, velocity_y_texture, velocity_z_texture: u32, size: [3]i32, compute_stats: bool) {
-    GL_LABEL_BLOCK("Divergence");
-    //query_block(.Divergence);
-
-    gl.BindTextureUnit(0, velocity_x_texture);
-    gl.BindTextureUnit(1, velocity_y_texture);
-    gl.BindTextureUnit(2, velocity_z_texture);
-    gl.BindImageTexture(0, divergence_texture, 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
-    
-    gl.UseProgram(ctx.compute_programs["divergence2"].handle)
-    gl.Uniform1i(0, i32(compute_stats));
-    gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
-    if compute_stats {
-        gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8} / 2))
-    } else {
-        block_query("divergence", ctx.timestep, int(size.x*size.y*size.z)*8, .Simulation)
-        gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8} / 2))
-    }
-}
 
 do_compare_divergence :: proc(divergence_texture1, divergence_texture2, velocity_x_texture, velocity_y_texture, velocity_z_texture, residual_texture: u32, size: [3]i32) {
     //if true do return
@@ -253,57 +234,6 @@ do_jacobi_vertex :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u
     }
 }
 
-do_jacobi_vertex2 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega: f32, size: [3]i32, iterations: int) {
-    GL_LABEL_BLOCK("Jacobi Vertex");
-    //query_block(.Jacobi);
-    gl.UseProgram(ctx.compute_programs["jacobi_vertex2"].handle)
-    gl.Uniform3ui(0, expand_values(linalg.to_u32(size)));
-    gl.Uniform1f(1, omega);
-    gl.BindTextureUnit(1, divergence_texture);
-    for i in 0..<iterations {
-        gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
-        gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
-        block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
-        gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8} / 2))
-        swap(ping_texture, pong_texture)
-    }
-}
-
-do_jacobi_vertex3 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega: f32, size: [3]i32, iterations: int) {
-    GL_LABEL_BLOCK("Jacobi Vertex");
-    //query_block(.Jacobi);
-    gl.UseProgram(ctx.compute_programs["jacobi_vertex3"].handle)
-    gl.Uniform3ui(0, expand_values(linalg.to_u32(size)));
-    gl.Uniform1f(1, omega);
-    gl.BindTextureUnit(1, divergence_texture);
-    for i in 0..<iterations {
-        gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
-        gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
-        block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
-        gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8} / 2))
-        swap(ping_texture, pong_texture)
-    }
-}
-
-do_jacobi_vertex4 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega: f32, size: [3]i32, iterations: int) {
-    GL_LABEL_BLOCK("Jacobi Vertex");
-    //query_block(.Jacobi);
-    gl.UseProgram(ctx.compute_programs["jacobi_vertex4"].handle)
-    gl.Uniform3ui(0, expand_values(linalg.to_u32(size)));
-    gl.Uniform1f(1, omega);
-    gl.BindTextureUnit(1, divergence_texture);
-    for i in 0..<iterations {
-        gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
-        gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
-        block_query(fmt.tprintf("jacobi vertex %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
-        gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
-        swap(ping_texture, pong_texture)
-    }
-}
-
 do_sor :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega: f32, size: [3]i32, iterations: int) {
     GL_LABEL_BLOCK("SOR");
     //query_block(.Jacobi);
@@ -319,24 +249,6 @@ do_sor :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega:
         gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
         block_query(fmt.tprintf("sor %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6, .Simulation)
         gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
-    }
-}
-
-do_sor2 :: proc(ping_texture, pong_texture: ^u32, divergence_texture: u32, omega: f32, size: [3]i32, iterations: int) {
-    GL_LABEL_BLOCK("SOR");
-    //query_block(.Jacobi);
-    program := ctx.compute_programs["sor2"]
-    gl.UseProgram(program.handle)
-    gl.Uniform3i(0, expand_values(size));
-    gl.Uniform1f(1, omega);
-    gl.BindTextureUnit(1, divergence_texture);
-    for i in 0..<1*iterations {
-        gl.BindTextureUnit(0, ping_texture^);
-        gl.BindImageTexture(0, pong_texture^, 0, gl.TRUE, 0, gl.WRITE_ONLY, TEXTURE_PRECISION);
-        gl.MemoryBarrier(gl.TEXTURE_FETCH_BARRIER_BIT)
-        block_query(fmt.tprintf("sor %d", ctx.sizes[.X1].x/size.x), ctx.timestep, int(size.x*size.y*size.z)*6*2, .Simulation)
-        gl.DispatchCompute(expand_values(linalg.to_u32(size) / {8, 8, 8}))
-        swap(ping_texture, pong_texture)
     }
 }
 
@@ -391,11 +303,7 @@ vcycle :: proc(current_level, max_level: Resolution) {
 
     do_jacobi(&ctx.pressure_ping_textures[current_level], &ctx.pressure_pong_textures[current_level], ctx.rhs_textures[current_level], 6.0/7.0, ctx.sizes[current_level], 1)
     if current_level == max_level {
-        if ctx.use_optimizations {
-            do_sor2(&ctx.pressure_ping_textures[current_level], &ctx.pressure_pong_textures[current_level], ctx.rhs_textures[current_level], ctx.solve_weight, ctx.sizes[current_level], ctx.solves2)
-        } else {
-            do_sor(&ctx.pressure_ping_textures[current_level], &ctx.pressure_pong_textures[current_level], ctx.rhs_textures[current_level], ctx.solve_weight, ctx.sizes[current_level], ctx.solves2)
-        }
+        do_sor(&ctx.pressure_ping_textures[current_level], &ctx.pressure_pong_textures[current_level], ctx.rhs_textures[current_level], ctx.solve_weight, ctx.sizes[current_level], ctx.solves2)
         return
     }
 
